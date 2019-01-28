@@ -1,0 +1,34 @@
+{
+  "name": "easyfoodbot",
+  "version": "1.0.0",
+  "description": "EasyFood Bot",
+  "main": "src/app.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./build/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kirick1/easyfoodbot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kirick1/easyfoodbot/issues"
+  },
+  "homepage": "https://github.com/kirick1/easyfoodbot#readme",
+  "dependencies": {
+    "@types/dotenv": "^6.1.0",
+    "@types/pg": "^7.4.11",
+    "@types/validator": "^10.9.0",
+    "bootbot": "^1.0.16",
+    "dotenv": "^6.2.0",
+    "pg": "^7.8.0",
+    "validator": "^10.11.0"
+  },
+  "devDependencies": {
+    "tslint": "^5.12.1",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.2.4"
+  }
+}
