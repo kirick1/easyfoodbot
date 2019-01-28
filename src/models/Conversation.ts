@@ -11,7 +11,7 @@ export default class Conversation {
   static YesNo (conversation: any, text: string = 'Right?') {
     return new Promise(resolve => conversation.ask({ text, quickReplies: ['Yes', 'No'] }, (payload: Payload) => resolve(payload.message.text === 'Yes')))
   }
-  static Question (conversation: any, question: object, confirm: boolean = false, validator: Function = (value: string): boolean => !!value) {
+  static Question (conversation: any, question: any, confirm: boolean = false, validator: Function = (value: string): boolean => !!value) {
     return new Promise(resolve => conversation.ask(question, async (payload: Payload) => {
       const text = payload.message.text
       console.log('TEXT: ', text)
