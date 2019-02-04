@@ -1,25 +1,22 @@
 import Dish from '../classes/Dish'
 import DishesSet from '../classes/DishesSet'
-import { Question, YesNo } from './conversation'
+import { Question, YesNo, Conversation } from './conversation'
 
-export async function selectDishesSet (conversation: any, dishesSets: Map<string, DishesSet>) {
+export async function selectDishesSet (conversation: any, dishesSets: Map<string, DishesSet>): Promise<DishesSet> {
   if (dishesSets.size === 0) {
     await conversation.say('There are no sets yet!')
-    await conversation.end()
-    throw Error('There are no sets yet!')
+    return conversation.end()
   }
   try {
     const title = await Question(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) })
     if (!title || typeof title !== 'string' || !dishesSets.has(title)) {
       await conversation.say('Title was not selected!')
-      await conversation.end()
-      return null
+      return await conversation.end()
     }
-    const dishesSet = dishesSets.get(title)
+    const dishesSet = dishesSets.has(title) ? dishesSets.get(title) : null
     if (!dishesSet || dishesSet.dishes.size === 0) {
       await conversation.say('There are no dishes in selected set!')
-      await conversation.end()
-      return new Error('There are no dishes in selected set!')
+      return await conversation.end()
     }
     await conversation.sendGenericTemplate(Array.from(dishesSet.dishes.values()).map((dish: Dish) => ({
       title: `${dish.title} (${dish.getTotalPrice().toFixed(2)})`,
@@ -40,8 +37,7 @@ export async function selectDishesSet (conversation: any, dishesSets: Map<string
   } catch (error) {
     console.error('[BOT] [SELECTION] ERROR GETTING SELECTED SET DISHES: ', error)
     await conversation.say('Something went wrong, please try again!')
-    await conversation.end()
-    return null
+    return conversation.end()
   }
 }
 export async function getSelectedDishesFromSelectedDishesSet (conversation: any, dishesSets: Map<string, DishesSet> = new Map(), selectedDishesSet: Map<string, Dish> = new Map(), text: string = 'Select the desired number of products'): Promise<any> {
@@ -100,5 +96,16 @@ export async function getSelectedDishesFromSelectedDishesSet (conversation: any,
     await conversation.say('Something went wrong, please try again!')
     await conversation.end()
     return []
+  }
+}
+export async function SelectDishesForOrder (chat: any) {
+  try {
+    const conversation = await Conversation(chat)
+    const dishesSets = await DishesSet.getAllDishesSets()
+    const selectedDishesSetDishesMap = await selectDishesSet(conversation, dishesSets)
+    return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSetDishesMap.dishes)
+  } catch (error) {
+    console.error('[BOT] [SELECTION] SELECTING DISHES FOR ORDER ERROR: ', error)
+    throw Error(error)
   }
 }

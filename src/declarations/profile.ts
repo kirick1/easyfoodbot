@@ -5,4 +5,5 @@ export interface ProfileObject {
   profile_pic: string
   locale: string
   gender: string
+  messenger_id?: number
 }

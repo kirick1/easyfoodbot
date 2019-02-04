@@ -3,6 +3,9 @@ import Dish from './Dish'
 import { Status } from '../declarations/status'
 import { OrderObject } from '../declarations/order'
 import { TypeOfRepetitions } from '../declarations/typeOfRepetitions'
+import { Payload } from '../declarations/payload'
+import User from './User'
+import { SelectDishesForOrder } from '../controllers/selection'
 
 export default class Order {
   id: number
@@ -23,6 +26,11 @@ export default class Order {
     this.isCompleted = order.is_completed
     this.dishes = order.dishes && order.dishes.size > 0 ? order.dishes : new Map()
   }
+  getTotalPrice (): number {
+    let total = 0.0
+    for (const dish of this.dishes.values()) total += dish.getTotalPrice()
+    return total
+  }
   async getDishes () {
     if (this.dishes && this.dishes.size > 0) return this.dishes
     try {
@@ -42,7 +50,7 @@ export default class Order {
   }
   async showReceipt (chat: any, user: any) {
     return this.status !== 'new'
-      ? await chat.sendTemplate({
+      ? chat.sendTemplate({
         template_type: 'receipt',
         recipient_name: `${user.first_name} ${user.last_name}`,
         merchant_name: 'EasyFood Delivery',
@@ -50,25 +58,48 @@ export default class Order {
         currency: 'EUR',
         payment_method: 'Cash',
         summary: {
-          total_cost: this.total_price
+          total_cost: this.getTotalPrice()
         },
-        elements: this.dishes && this.dishes.length > 0
-          ? this.dishes.map(dish => ({
+        elements: this.dishes && this.dishes.size > 0
+          ? Array.from(this.dishes.values()).map(dish => ({
             title: dish.title,
             subtitle: dish.description,
-            quantity: parseInt(dish.number) || 1,
-            price: parseFloat(dish.price).toFixed(2),
+            quantity: dish.numberInOrder || 1,
+            price: dish.getTotalPrice().toFixed(2),
             currency: 'EUR',
             image_url: dish.photo
           })) : []
-      }) : await chat.sendGenericTemplate([{
+      }) : chat.sendGenericTemplate([{
         title: `Order #${this.id}`,
-        subtitle: `Price: ${this.total_price}€`,
+        subtitle: `Price: ${this.getTotalPrice().toFixed(2)}€`,
         buttons: [{
           title: 'Cancel',
           type: 'postback',
           payload: `ORDERS_CANCEL___${this.id}`
         }]
-      }], payload => console.log('PAYLOAD: ', payload))
+      }], (payload: Payload) => console.log('PAYLOAD: ', payload))
+  }
+  static async makeImmediateOrder (chat: any, user: User): Promise<Order> {
+    try {
+      const dishes = await SelectDishesForOrder(chat)
+      const totalPrice = Dish.getDishesMapTotalPrice(dishes)
+      const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice])
+      if (dishes) for (const dish of dishes) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), parseInt(dish.id, 10), parseInt(dish.numberInOrder, 10) || 1])
+      const order = new Order(orderData)
+      await db.query(`NOTIFY new_order, '${JSON.stringify({ id: order.id, user_id: order.userID, total_price: order.getTotalPrice() })}'`)
+      return order
+    } catch (error) {
+      console.error('[BOT] [ORDER] ERROR MAKING IMMEDIATE ORDER: ', error)
+      throw Error(error)
+    }
+  }
+  static async toArray (orders: Array<OrderObject> = []): Promise<Array<Order>> {
+    const result = []
+    for (const orderData of orders) {
+      const order = new Order(orderData)
+      await order.getDishes()
+      result.push(order)
+    }
+    return result
   }
 }
