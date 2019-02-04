@@ -22,9 +22,12 @@ const bot = new BootBot({
 
 import GreetingText from './config/greeting_text'
 import PersistentMenu from './config/persistent_menu'
+import PostbackEvents from './events'
 
 bot.setGreetingText(GreetingText)
 bot.setPersistentMenu(PersistentMenu)
+
+bot.on('postback', PostbackEvents)
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000
 
