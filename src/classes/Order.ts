@@ -102,4 +102,15 @@ export default class Order {
     }
     return result
   }
+  static async getOrderByID (orderID: number | string): Promise<Order> {
+    try {
+      const { rows: [orderData] } = await db.query('SELECT * FROM orders WHERE id = $1', [orderID])
+      const order = new Order(orderData)
+      await order.getDishes()
+      return order
+    } catch (error) {
+      console.error('[BOT] ERROR GETTING ORDER BY ID: ', error)
+      throw Error(error)
+    }
+  }
 }
