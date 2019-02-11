@@ -56,11 +56,7 @@ async function getSelectedDishesFromSelectedDishesSet(conversation, dishesSets =
     }
     const selected = conversation.get('selected_dishes');
     try {
-        const quickReplies = Array.from(selectedDishesSet.keys());
-        quickReplies.push('(Sets)');
-        quickReplies.push('(Submit)');
-        quickReplies.push('(Cancel)');
-        const answer = await conversation_1.Question(conversation, { text, quickReplies });
+        const answer = await conversation_1.Question(conversation, { text, quickReplies: [...selectedDishesSet.keys(), '(Sets)', '(Submit)', '(Cancel)'] });
         if (typeof answer !== 'string') {
             await conversation.say('Answer is not valid!');
             await conversation.end();
@@ -68,7 +64,7 @@ async function getSelectedDishesFromSelectedDishesSet(conversation, dishesSets =
         }
         if (answer === '(Sets)') {
             const dishesSet = await selectDishesSet(conversation, dishesSets);
-            return dishesSet instanceof DishesSet_1.default ? await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet.dishes, Dish_1.default.getSubmittedDishesPriceListString(selected)) : [];
+            return dishesSet instanceof DishesSet_1.default ? await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet.dishes, Dish_1.default.getSubmittedDishesPriceListString(selected.dishes)) : [];
         }
         else if (answer === '(Submit)') {
             const totalPrice = selected.getTotalPrice();
@@ -84,22 +80,25 @@ async function getSelectedDishesFromSelectedDishesSet(conversation, dishesSets =
                 return new Error('Order was canceled!');
             }
             else
-                return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish_1.default.getSubmittedDishesPriceListString(selected));
+                return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish_1.default.getSubmittedDishesPriceListString(selected.dishes));
         }
         else {
             console.log('ANSWER: ', answer);
             console.log('SELECTED: ', selected);
             console.log('SELECTED SET DISHES: ', selectedDishesSet);
-            const current = selected.get(answer);
+            const current = selected.dishes.get(answer);
             console.log('CURRENT: ', current);
             if (current) {
                 current.numberInOrder += 1;
-                selected.set(answer, current);
+                selected.dishes.set(answer, current);
             }
-            else
-                selected.set(answer, selectedDishesSet.get(answer));
+            else {
+                const dish = selectedDishesSet.get(answer);
+                if (dish instanceof Dish_1.default)
+                    selected.dishes.set(answer, dish);
+            }
             conversation.set('selected_dishes');
-            return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish_1.default.getSubmittedDishesPriceListString(selected));
+            return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish_1.default.getSubmittedDishesPriceListString(selected.dishes));
         }
     }
     catch (error) {

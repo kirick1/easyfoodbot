@@ -51,13 +51,9 @@ export async function getSelectedDishesFromSelectedDishesSet (conversation: any,
     await conversation.end()
     throw Error('There are no dishes in selected set!')
   }
-  const selected = conversation.get('selected_dishes')
+  const selected: DishesSet = conversation.get('selected_dishes')
   try {
-    const quickReplies = Array.from(selectedDishesSet.keys())
-    quickReplies.push('(Sets)')
-    quickReplies.push('(Submit)')
-    quickReplies.push('(Cancel)')
-    const answer = await Question(conversation, { text, quickReplies })
+    const answer = await Question(conversation, { text, quickReplies: [...selectedDishesSet.keys(), '(Sets)', '(Submit)', '(Cancel)'] })
     if (typeof answer !== 'string') {
       await conversation.say('Answer is not valid!')
       await conversation.end()
@@ -65,7 +61,7 @@ export async function getSelectedDishesFromSelectedDishesSet (conversation: any,
     }
     if (answer === '(Sets)') {
       const dishesSet = await selectDishesSet(conversation, dishesSets)
-      return dishesSet instanceof DishesSet ? await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet.dishes, Dish.getSubmittedDishesPriceListString(selected)) : []
+      return dishesSet instanceof DishesSet ? await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet.dishes, Dish.getSubmittedDishesPriceListString(selected.dishes)) : []
     } else if (answer === '(Submit)') {
       const totalPrice = selected.getTotalPrice()
       const yes = await YesNo(conversation, `Total price is ${totalPrice.toFixed(2)}€, make order?`)
@@ -77,19 +73,23 @@ export async function getSelectedDishesFromSelectedDishesSet (conversation: any,
         await conversation.say('Order was canceled!')
         await conversation.end()
         return new Error('Order was canceled!')
-      } else return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish.getSubmittedDishesPriceListString(selected))
+      } else return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish.getSubmittedDishesPriceListString(selected.dishes))
     } else {
       console.log('ANSWER: ', answer)
       console.log('SELECTED: ', selected)
       console.log('SELECTED SET DISHES: ', selectedDishesSet)
-      const current: Dish = selected.get(answer)
+
+      const current = selected.dishes.get(answer)
       console.log('CURRENT: ', current)
       if (current) {
         current.numberInOrder += 1
-        selected.set(answer, current)
-      } else selected.set(answer, selectedDishesSet.get(answer))
+        selected.dishes.set(answer, current)
+      } else {
+        const dish = selectedDishesSet.get(answer)
+        if (dish instanceof Dish) selected.dishes.set(answer, dish)
+      }
       conversation.set('selected_dishes')
-      return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish.getSubmittedDishesPriceListString(selected))
+      return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish.getSubmittedDishesPriceListString(selected.dishes))
     }
   } catch (error) {
     console.error('[BOT] [SELECTION] ERROR GETTING SELECTED DISHES FROM SELECTED DISHES SET: ', error)
