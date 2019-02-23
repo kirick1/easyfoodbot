@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const database_1 = require("../config/database");
+const database_1 = require("../database");
 const Dish_1 = require("./Dish");
 class DishesSet {
     constructor(dishesSet) {
@@ -29,12 +29,11 @@ class DishesSet {
                     this.dishes.set(dish.getTitle(), dish);
                 }
             }
-            return this.dishes;
         }
         catch (error) {
             console.error('[BOT] [DISHES SET] ERROR GETTING SET DISHES: ', error);
-            return this.dishes;
         }
+        return this.dishes;
     }
     static async getAllDishesSets() {
         const map = new Map();
@@ -45,12 +44,11 @@ class DishesSet {
                 await dishesSet.getDishes();
                 map.set(dishesSet.getTitle(), dishesSet);
             }
-            return map;
         }
         catch (error) {
             console.error('[BOT] [DISHES SET] ERROR GETTING ALL DISHES SETS: ', error);
-            return map;
         }
+        return map;
     }
 }
 exports.default = DishesSet;

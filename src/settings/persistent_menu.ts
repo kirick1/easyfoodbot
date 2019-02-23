@@ -1,4 +1,4 @@
-export default [
+export const PersistentMenu = [
   {
     title: 'Make order',
     type: 'postback',

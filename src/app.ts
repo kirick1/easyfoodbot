@@ -1,14 +1,7 @@
-import * as dotenv from 'dotenv'
+import { join } from 'path'
+import { config } from 'dotenv'
 
-dotenv.load()
-
-import db from './config/database'
-
-process.on('SIGINT', async () => {
-  await db.end()
-  await bot.close()
-  process.exit(0)
-})
+config({ path: join(__dirname, '.env') })
 
 const BootBot = require('bootbot')
 
@@ -20,12 +13,12 @@ const bot = new BootBot({
   graphApiVersion: 'v3.2'
 })
 
-import GreetingText from './config/greeting_text'
-import PersistentMenu from './config/persistent_menu'
-import PostbackEvents from './events'
+import { GreetingText, PersistentMenu } from './settings/'
 
 bot.setGreetingText(GreetingText)
 bot.setPersistentMenu(PersistentMenu)
+
+import { PostbackEvents } from './events'
 
 bot.on('postback', PostbackEvents)
 

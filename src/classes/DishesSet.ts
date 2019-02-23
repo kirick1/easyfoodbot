@@ -1,4 +1,4 @@
-import db from '../config/database'
+import db from '../database'
 import Dish from './Dish'
 import { DishesSetObject } from '../declarations/dishesSet'
 
@@ -30,11 +30,10 @@ export default class DishesSet {
           this.dishes.set(dish.getTitle(), dish)
         }
       }
-      return this.dishes
     } catch (error) {
       console.error('[BOT] [DISHES SET] ERROR GETTING SET DISHES: ', error)
-      return this.dishes
     }
+    return this.dishes
   }
   static async getAllDishesSets () {
     const map: Map<string, DishesSet> = new Map()
@@ -45,10 +44,9 @@ export default class DishesSet {
         await dishesSet.getDishes()
         map.set(dishesSet.getTitle(), dishesSet)
       }
-      return map
     } catch (error) {
       console.error('[BOT] [DISHES SET] ERROR GETTING ALL DISHES SETS: ', error)
-      return map
     }
+    return map
   }
 }

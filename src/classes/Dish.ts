@@ -1,4 +1,4 @@
-import db from '../config/database'
+import db from '../database'
 import { DishObject } from '../declarations/dish'
 
 export default class Dish {

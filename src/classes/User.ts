@@ -1,4 +1,4 @@
-import db from '../config/database'
+import db from '../database'
 import Order from './Order'
 import { UserObject } from '../declarations/user'
 import { ProfileObject } from '../declarations/profile'
@@ -151,7 +151,7 @@ export default class User {
       throw Error(error)
     }
   }
-  async cancelOrder (order: Order): Promise<Order> {
+  static async cancelOrder (order: Order): Promise<Order> {
     try {
       const { rows: [canceledOrderData] } = await db.query(`UPDATE orders SET status = 'canceled', completed_at = now() at time zone 'utc', updated_at = now() at time zone 'utc' WHERE id = $1 RETURNING *`, [order.id])
       const canceled = new Order(canceledOrderData)

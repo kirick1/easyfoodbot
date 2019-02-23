@@ -17,6 +17,7 @@ db.connect(async error => {
     process.exit(1)
   } else console.log('[DATABASE] CONNECTED!')
 })
+
 db.on('error', error => {
   console.error('[DATABASE] ERROR: ', error)
 })
@@ -25,6 +26,11 @@ db.on('end', () => {
 })
 db.on('notice', notice => {
   console.warn('[DATABASE] NOTICE: ', notice)
+})
+
+process.once('SIGINT', async () => {
+  await db.end()
+  process.exit(0)
 })
 
 export default db

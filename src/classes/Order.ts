@@ -1,4 +1,4 @@
-import db from '../config/database'
+import db from '../database'
 import Dish from './Dish'
 import { Status } from '../declarations/status'
 import { OrderObject } from '../declarations/order'
@@ -42,11 +42,10 @@ export default class Order {
           this.dishes.set(dish.getTitle(), dish)
         }
       }
-      return this.dishes
     } catch (error) {
       console.error('[BOT] [ORDER] ERROR GETTING ORDER DISHES: ', error)
-      return this.dishes
     }
+    return this.dishes
   }
   async showReceipt (chat: any, user: any) {
     return this.status !== 'new'

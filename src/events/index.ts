@@ -1,9 +1,9 @@
 import User from '../classes/User'
-import { Payload } from '../declarations/payload'
 import Orders from './orders'
 import Account from './account'
+import { Payload } from '../declarations/payload'
 
-export default async function (payload: Payload, chat: any, data?: any) {
+export async function PostbackEvents (payload: Payload, chat: any, data?: any) {
   try {
     if (data && data.captured) console.warn('[BOT] [POSTBACK] DATA CAPTURED!')
     const user = new User()

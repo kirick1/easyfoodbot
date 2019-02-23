@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const User_1 = require("../classes/User");
 const orders_1 = require("./orders");
 const account_1 = require("./account");
-async function default_1(payload, chat, data) {
+async function PostbackEvents(payload, chat, data) {
     try {
         if (data && data.captured)
             console.warn('[BOT] [POSTBACK] DATA CAPTURED!');
@@ -29,5 +29,5 @@ async function default_1(payload, chat, data) {
         return chat.say('Something went wrong, please try again');
     }
 }
-exports.default = default_1;
+exports.PostbackEvents = PostbackEvents;
 //# sourceMappingURL=index.js.map

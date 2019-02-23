@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const database_1 = require("../config/database");
+const database_1 = require("../database");
 const Dish_1 = require("./Dish");
 const status_1 = require("../declarations/status");
 const typeOfRepetitions_1 = require("../declarations/typeOfRepetitions");
@@ -34,12 +34,11 @@ class Order {
                     this.dishes.set(dish.getTitle(), dish);
                 }
             }
-            return this.dishes;
         }
         catch (error) {
             console.error('[BOT] [ORDER] ERROR GETTING ORDER DISHES: ', error);
-            return this.dishes;
         }
+        return this.dishes;
     }
     async showReceipt(chat, user) {
         return this.status !== 'new'

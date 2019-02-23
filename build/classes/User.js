@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const database_1 = require("../config/database");
+const database_1 = require("../database");
 const Order_1 = require("./Order");
 const validator_1 = require("validator");
 const conversation_1 = require("../controllers/conversation");
@@ -154,7 +154,7 @@ class User {
             throw Error(error);
         }
     }
-    async cancelOrder(order) {
+    static async cancelOrder(order) {
         try {
             const { rows: [canceledOrderData] } = await database_1.default.query(`UPDATE orders SET status = 'canceled', completed_at = now() at time zone 'utc', updated_at = now() at time zone 'utc' WHERE id = $1 RETURNING *`, [order.id]);
             const canceled = new Order_1.default(canceledOrderData);
