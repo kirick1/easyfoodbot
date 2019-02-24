@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const User_1 = require("../classes/User");
 const Order_1 = require("../classes/Order");
 async function default_1(chat, command, user) {
     try {
@@ -43,7 +44,7 @@ async function default_1(chat, command, user) {
                         if (!orderID)
                             return await chat.say('No order!');
                         const order = await Order_1.default.getOrderByID(orderID);
-                        await user.cancelOrder(order);
+                        await User_1.default.cancelOrder(order);
                         await chat.say(`Order #${order.id} was canceled!`);
                         const created = await user.getCreatedOrders();
                         if (created.length > 0)

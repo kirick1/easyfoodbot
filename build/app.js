@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = require("path");
 const dotenv_1 = require("dotenv");
-dotenv_1.config({ path: path_1.join(__dirname, '.env') });
+dotenv_1.config({ path: path_1.join(__dirname, '..', '.env') });
 const BootBot = require('bootbot');
 const bot = new BootBot({
     accessToken: process.env.FACEBOOK_ACCESS_TOKEN,

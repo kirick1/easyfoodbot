@@ -36,7 +36,7 @@ export default async function (chat: any, command: string, user: User) {
           case 'ORDERS_CANCEL': {
             if (!orderID) return await chat.say('No order!')
             const order = await Order.getOrderByID(orderID)
-            await user.cancelOrder(order)
+            await User.cancelOrder(order)
             await chat.say(`Order #${order.id} was canceled!`)
             const created = await user.getCreatedOrders()
             if (created.length > 0) await chat.say('Created orders:')
