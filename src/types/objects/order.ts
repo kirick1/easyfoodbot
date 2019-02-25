@@ -1,6 +1,5 @@
-import Dish from '../../classes/Dish'
-import { Status } from '../enums/status'
-import { TypeOfRepetitions } from '../enums/typeOfRepetitions'
+import { Dish } from '../../classes'
+import { Status, TypeOfRepetitions } from '../enums'
 
 export interface OrderObject {
   id: number

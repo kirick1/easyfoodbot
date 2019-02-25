@@ -1,6 +1,6 @@
 import { User, Order } from '../classes'
 
-export default async function (chat: any, command: string, user: User) {
+export async function OrderEvents (chat: any, command: string, user: User) {
   try {
     switch (command) {
       case 'ORDERS_MAKE_ORDER_NOW': {

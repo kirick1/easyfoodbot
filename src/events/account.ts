@@ -1,6 +1,6 @@
 import { User } from '../classes'
 
-export default async function (chat: any, command: string, user: User) {
+export async function AccountEvents (chat: any, command: string, user: User) {
   try {
     switch (command) {
       case 'ACCOUNT_CONTACT_INFORMATION': {

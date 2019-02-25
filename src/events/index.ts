@@ -1,6 +1,7 @@
 import { User } from '../classes'
-import Orders from './orders'
-import Account from './account'
+import { OrderEvents } from './orders'
+import { AccountEvents } from './account'
+
 import { Payload } from '../types'
 
 export async function PostbackEvents (payload: Payload, chat: any, data?: any) {
@@ -13,8 +14,8 @@ export async function PostbackEvents (payload: Payload, chat: any, data?: any) {
     if (command === 'BOOTBOT_GET_STARTED') return await chat.say(`Hello, ${user.firstName} ${user.lastName}!`)
     else if (command === 'WRITE_FEEDBACK') return await user.writeFeedBack(chat)
     const [commandType] = command.split('_')
-    if (commandType === 'ORDERS') return await Orders(chat, command, user)
-    else if (commandType === 'ACCOUNT') return await Account(chat, command, user)
+    if (commandType === 'ORDERS') return await OrderEvents(chat, command, user)
+    else if (commandType === 'ACCOUNT') return await AccountEvents(chat, command, user)
     else return await chat.say('Unknown command type!')
   } catch (error) {
     console.error('[BOT] ERROR PROCESSING POSTBACK EVENT: ', error)
