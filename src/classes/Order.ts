@@ -1,9 +1,9 @@
 import db from '../database'
 import Dish from './Dish'
-import { Status } from '../declarations/status'
-import { OrderObject } from '../declarations/order'
-import { TypeOfRepetitions } from '../declarations/typeOfRepetitions'
-import { Payload } from '../declarations/payload'
+import { Status } from '../types/enums/status'
+import { OrderObject } from '../types/objects/order'
+import { TypeOfRepetitions } from '../types/enums/typeOfRepetitions'
+import { Payload } from '../types/payload'
 import User from './User'
 import { SelectDishesForOrder } from '../controllers/selection'
 

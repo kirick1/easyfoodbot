@@ -1,5 +1,5 @@
 import db from '../database'
-import { DishObject } from '../declarations/dish'
+import { DishObject } from '../types/objects/dish'
 
 export default class Dish {
   id: number

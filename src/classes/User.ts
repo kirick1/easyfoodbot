@@ -1,7 +1,7 @@
 import db from '../database'
 import Order from './Order'
-import { UserObject } from '../declarations/user'
-import { ProfileObject } from '../declarations/profile'
+import { UserObject } from '../types/objects/user'
+import { ProfileObject } from '../types/objects/profile'
 import { isEmail, isURL } from 'validator'
 import { Conversation, YesNo, Question } from '../controllers/conversation'
 

@@ -1,4 +1,4 @@
-import Dish from '../classes/Dish'
+import Dish from '../../classes/Dish'
 
 export interface DishesSetObject {
   id: number

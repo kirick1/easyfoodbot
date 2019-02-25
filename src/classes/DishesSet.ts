@@ -1,6 +1,6 @@
 import db from '../database'
 import Dish from './Dish'
-import { DishesSetObject } from '../declarations/dishesSet'
+import { DishesSetObject } from '../types/objects/dishesSet'
 
 export default class DishesSet {
   id: number
