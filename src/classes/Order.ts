@@ -1,13 +1,12 @@
 import db from '../database'
-import Dish from './Dish'
-import { Status } from '../types/enums/status'
-import { OrderObject } from '../types/objects/order'
-import { TypeOfRepetitions } from '../types/enums/typeOfRepetitions'
-import { Payload } from '../types/payload'
-import User from './User'
+import { Dish } from './Dish'
+import { Status, TypeOfRepetitions } from '../types/enums'
+import { OrderObject } from '../types/objects'
+import { Payload } from '../types'
+import { User } from './User'
 import { SelectDishesForOrder } from '../controllers/selection'
 
-export default class Order {
+export class Order {
   id: number
   userID: number
   totalPrice: number

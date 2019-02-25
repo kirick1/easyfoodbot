@@ -1,11 +1,10 @@
 import db from '../database'
-import Order from './Order'
-import { UserObject } from '../types/objects/user'
-import { ProfileObject } from '../types/objects/profile'
+import { Order } from './Order'
+import { UserObject, ProfileObject } from '../types/objects'
 import { isEmail, isURL } from 'validator'
 import { Conversation, YesNo, Question } from '../controllers/conversation'
 
-export default class User {
+export class User {
   messengerID?: number
   firstName?: string
   lastName?: string

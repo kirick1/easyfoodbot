@@ -1,5 +1,4 @@
-import Dish from '../classes/Dish'
-import DishesSet from '../classes/DishesSet'
+import { Dish, DishesSet } from '../classes'
 import { Question, YesNo, Conversation } from './conversation'
 
 export async function selectDishesSet (conversation: any, dishesSets: Map<string, DishesSet>): Promise<DishesSet> {

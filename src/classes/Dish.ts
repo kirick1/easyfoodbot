@@ -1,7 +1,7 @@
 import db from '../database'
-import { DishObject } from '../types/objects/dish'
+import { DishObject } from '../types/objects'
 
-export default class Dish {
+export class Dish {
   id: number
   title: string
   description: string

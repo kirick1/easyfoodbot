@@ -1,4 +1,4 @@
-import User from '../classes/User'
+import { User } from '../classes'
 
 export default async function (chat: any, command: string, user: User) {
   try {

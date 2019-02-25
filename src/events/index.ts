@@ -1,7 +1,7 @@
-import User from '../classes/User'
+import { User } from '../classes'
 import Orders from './orders'
 import Account from './account'
-import { Payload } from '../types/payload'
+import { Payload } from '../types'
 
 export async function PostbackEvents (payload: Payload, chat: any, data?: any) {
   try {

@@ -1,8 +1,8 @@
 import db from '../database'
-import Dish from './Dish'
-import { DishesSetObject } from '../types/objects/dishesSet'
+import { Dish } from './Dish'
+import { DishesSetObject } from '../types/objects'
 
-export default class DishesSet {
+export class DishesSet {
   id: number
   title: string
   dishes: Map<string, Dish>

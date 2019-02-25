@@ -1,4 +1,4 @@
-import { Payload } from '../types/payload'
+import { Payload } from '../types'
 
 export function Conversation (chat: any): Promise<any> {
   return new Promise(resolve => {

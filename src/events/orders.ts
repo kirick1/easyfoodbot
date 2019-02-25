@@ -1,5 +1,4 @@
-import User from '../classes/User'
-import Order from '../classes/Order'
+import { User, Order } from '../classes'
 
 export default async function (chat: any, command: string, user: User) {
   try {
