@@ -110,7 +110,7 @@ export class User {
     await conversation.end()
     return this.getInformation()
   }
-  async showContactInformation (chat: any) {
+  showContactInformation (chat: any) {
     return this.email && this.phone
       ? chat.sendGenericTemplate([{
         title: `${this.firstName} ${this.lastName}`,

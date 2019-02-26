@@ -5,6 +5,7 @@ import { OrderObject } from '../types/objects'
 import { Payload } from '../types'
 import { User } from './User'
 import { SelectDishesForOrder } from '../controllers/selection'
+import { Chat } from '../types/bootbot'
 
 export class Order {
   id: number
@@ -32,25 +33,21 @@ export class Order {
   }
   async getDishes () {
     if (this.dishes && this.dishes.size > 0) return this.dishes
-    try {
-      const { rows: orderDishesIDs } = await db.query('SELECT dish_id, number FROM order_dishes WHERE order_id = $1', [this.id])
-      for (const { dish_id, number: num } of orderDishesIDs) {
-        const { rows: [dishData] } = await db.query('SELECT id, title, description, photo, price FROM dishes WHERE id = $1', [parseInt(dish_id, 10)])
-        if (dishData) {
-          const dish = new Dish(dishData, num)
-          this.dishes.set(dish.getTitle(), dish)
-        }
+    const { rows: orderDishesIDs } = await db.query('SELECT dish_id, number FROM order_dishes WHERE order_id = $1', [this.id])
+    for (const { dish_id, number: num } of orderDishesIDs) {
+      const { rows: [dishData] } = await db.query('SELECT id, title, description, photo, price FROM dishes WHERE id = $1', [parseInt(dish_id, 10)])
+      if (dishData) {
+        const dish = new Dish(dishData, num)
+        this.dishes.set(dish.getTitle(), dish)
       }
-    } catch (error) {
-      console.error('[BOT] [ORDER] ERROR GETTING ORDER DISHES: ', error)
     }
     return this.dishes
   }
-  async showReceipt (chat: any, user: any) {
-    return this.status !== 'new'
+  showReceipt (chat: Chat, user: User) {
+    return this.status !== Status.NEW
       ? chat.sendTemplate({
         template_type: 'receipt',
-        recipient_name: `${user.first_name} ${user.last_name}`,
+        recipient_name: `${user.firstName} ${user.lastName}`,
         merchant_name: 'EasyFood Delivery',
         order_number: `${this.id}`,
         currency: 'EUR',
@@ -77,7 +74,7 @@ export class Order {
         }]
       }], (payload: Payload) => console.log('PAYLOAD: ', payload))
   }
-  static async makeImmediateOrder (chat: any, user: User): Promise<Order> {
+  static async makeImmediateOrder (chat: Chat, user: User): Promise<Order> {
     try {
       const dishes = await SelectDishesForOrder(chat)
       const totalPrice = Dish.getDishesMapTotalPrice(dishes)
@@ -101,14 +98,9 @@ export class Order {
     return result
   }
   static async getOrderByID (orderID: number | string): Promise<Order> {
-    try {
-      const { rows: [orderData] } = await db.query('SELECT * FROM orders WHERE id = $1', [orderID])
-      const order = new Order(orderData)
-      await order.getDishes()
-      return order
-    } catch (error) {
-      console.error('[BOT] ERROR GETTING ORDER BY ID: ', error)
-      throw Error(error)
-    }
+    const { rows: [orderData] } = await db.query('SELECT * FROM orders WHERE id = $1', [orderID])
+    const order = new Order(orderData)
+    await order.getDishes()
+    return order
   }
 }

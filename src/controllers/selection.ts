@@ -1,7 +1,8 @@
 import { Dish, DishesSet } from '../classes'
 import { Question, YesNo, Conversation } from './conversation'
+import { Conversation as Convo, Chat } from '../types/bootbot'
 
-export async function selectDishesSet (conversation: any, dishesSets: Map<string, DishesSet>): Promise<DishesSet> {
+export async function selectDishesSet (conversation: Convo, dishesSets: Map<string, DishesSet>): Promise<DishesSet> {
   if (dishesSets.size === 0) {
     await conversation.say('There are no sets yet!')
     return conversation.end()
@@ -39,16 +40,16 @@ export async function selectDishesSet (conversation: any, dishesSets: Map<string
     return conversation.end()
   }
 }
-export async function getSelectedDishesFromSelectedDishesSet (conversation: any, dishesSets: Map<string, DishesSet> = new Map(), selectedDishesSet: Map<string, Dish> = new Map(), text: string = 'Select the desired number of products'): Promise<any> {
+export async function getSelectedDishesFromSelectedDishesSet (conversation: Convo, dishesSets: Map<string, DishesSet> = new Map(), selectedDishesSet: Map<string, Dish> = new Map(), text: string = 'Select the desired number of products'): Promise<any> {
   if (dishesSets.size === 0) {
     await conversation.say('There are no sets yet!')
     await conversation.end()
-    throw Error('There are no sets yet!')
+    return []
   }
   if (selectedDishesSet.size === 0) {
     await conversation.say('There are no dishes in selected set!')
     await conversation.end()
-    throw Error('There are no dishes in selected set!')
+    return []
   }
   const selected: DishesSet = conversation.get('selected_dishes')
   try {
@@ -87,7 +88,7 @@ export async function getSelectedDishesFromSelectedDishesSet (conversation: any,
         const dish = selectedDishesSet.get(answer)
         if (dish instanceof Dish) selected.dishes.set(answer, dish)
       }
-      conversation.set('selected_dishes')
+      conversation.set('selected_dishes', selected)
       return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish.getSubmittedDishesPriceListString(selected.dishes))
     }
   } catch (error) {
@@ -97,7 +98,7 @@ export async function getSelectedDishesFromSelectedDishesSet (conversation: any,
     return []
   }
 }
-export async function SelectDishesForOrder (chat: any) {
+export async function SelectDishesForOrder (chat: Chat) {
   try {
     const conversation = await Conversation(chat)
     const dishesSets = await DishesSet.getAllDishesSets()

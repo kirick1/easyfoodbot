@@ -1,13 +1,14 @@
 import { Payload } from '../types'
+import { Chat, Conversation } from '../types/bootbot'
 
-export function Conversation (chat: any): Promise<any> {
+export function Conversation (chat: Chat): Promise<Conversation> {
   return new Promise(resolve => {
     chat.conversation((conversation: any) => {
       return resolve(conversation)
     })
   })
 }
-export function YesNo (conversation: any, text: string = 'Right?'): Promise<boolean> {
+export function YesNo (conversation: Conversation, text: string = 'Right?'): Promise<boolean> {
   return new Promise(resolve => {
     conversation.ask({ text, quickReplies: ['Yes', 'No'] }, (payload: Payload) => {
       const answer = payload.message.text
@@ -18,7 +19,7 @@ export function YesNo (conversation: any, text: string = 'Right?'): Promise<bool
 export function defaultTextValidator (text?: string, minLength: number = 0, maxLength: number = 8000): boolean {
   return text !== null && text !== undefined && text !== '' && text.length >= minLength && text.length <= maxLength
 }
-export function Question (conversation: any, question: any, askConfirmation: boolean = false, validator: Function = defaultTextValidator): Promise<any> {
+export function Question (conversation: Conversation, question: any, askConfirmation: boolean = false, validator: Function = defaultTextValidator): Promise<any> {
   return new Promise(resolve => {
     conversation.ask(question, async (payload: Payload) => {
       const answer: string = payload.message.text

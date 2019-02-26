@@ -1,10 +1,11 @@
 import { User } from '../classes'
 import { OrderEvents } from './orders'
 import { AccountEvents } from './account'
+import { Chat } from '../types/bootbot'
 
 import { Payload } from '../types'
 
-export async function PostbackEvents (payload: Payload, chat: any, data?: any) {
+export async function PostbackEvents (payload: Payload, chat: Chat, data?: any) {
   try {
     if (data && data.captured) console.warn('[BOT] [POSTBACK] DATA CAPTURED!')
     const user = new User()

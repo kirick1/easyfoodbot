@@ -1,4 +1,3 @@
-import db from '../database'
 import { DishObject } from '../types/objects'
 
 export class Dish {
@@ -23,20 +22,6 @@ export class Dish {
   getTotalPrice (): number {
     return this.price * this.numberInOrder
   }
-  static convertToMap (dishesArray: Array<Dish> = []): Map<string, Dish> {
-    const map: Map<string, Dish> = new Map()
-    for (const dish of dishesArray) map.set(dish.getTitle(), dish)
-    return map
-  }
-  static async getByID (dishID: number, numberInOrder?: number) {
-    try {
-      const { rows: [dishData] } = await db.query('SELECT id, title, description, photo, price FROM dishes WHERE id = $1', [dishID])
-      return dishData ? new Dish(dishData, numberInOrder) : null
-    } catch (error) {
-      console.error('[BOT] [DISH] ERROR GETTING DISH BY ID: ', error)
-      return null
-    }
-  }
   static getSubmittedDishesPriceListString (dishesMap: Map<string, Dish> = new Map()): string {
     if (dishesMap.size === 0) return 'Dishes not found!'
     let result = 'Select dishes:\n\n'
@@ -46,7 +31,6 @@ export class Dish {
   }
   static getDishesMapTotalPrice (dishesMap: Map<string, Dish> = new Map()): number {
     let total = 0.0
-    if (dishesMap.size === 0) return total
     for (const dish of dishesMap.values()) total += dish.getTotalPrice()
     return total
   }
