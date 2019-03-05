@@ -1,7 +1,7 @@
+import { Chat } from '../types'
 import { User, Order } from '../classes'
-import { Chat } from '../types/bootbot'
 
-export async function OrderEvents (chat: Chat, command: string, user: User) {
+export const OrderEventsHandler = async (chat: Chat, command: string, user: User) => {
   try {
     switch (command) {
       case 'ORDERS_MAKE_ORDER_NOW': {

@@ -4,3 +4,6 @@ export enum Status {
   DONE = 'done',
   CANCELED = 'canceled'
 }
+export enum TypeOfRepetitions {
+  IMMEDIATE = 'immediate'
+}

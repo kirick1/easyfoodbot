@@ -1,7 +1,7 @@
+import { Chat } from '../types'
 import { User } from '../classes'
-import { Chat } from '../types/bootbot'
 
-export async function AccountEvents (chat: Chat, command: string, user: User) {
+export const AccountEventsHandler = async (chat: Chat, command: string, user: User) => {
   try {
     switch (command) {
       case 'ACCOUNT_CONTACT_INFORMATION': {

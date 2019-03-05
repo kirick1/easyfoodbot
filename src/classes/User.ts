@@ -1,20 +1,20 @@
 import db from '../database'
-import { Order } from './Order'
-import { UserObject, ProfileObject } from '../types/objects'
+import { Order } from '.'
 import { isEmail, isURL } from 'validator'
-import { Conversation, YesNo, Question } from '../controllers/conversation'
+import { UserObject, ProfileObject, Chat } from '../types'
+import { createConversation, askYesNo, askQuestion } from '../controllers'
 
 export class User {
-  messengerID?: number
-  firstName?: string
-  lastName?: string
-  profilePic?: string
-  locale?: string
-  gender?: string
-  id?: number
-  email?: string
-  phone?: string
-  profileURL?: string
+  messengerID: number | null = null
+  firstName: string | null = null
+  lastName: string | null = null
+  profilePic: string | null = null
+  locale: string | null = null
+  gender: string | null = null
+  id: number | null = null
+  email: string | null = null
+  phone: string | null = null
+  profileURL: string | null = null
   constructor (user?: UserObject) {
     if (user) {
       this.messengerID = user.messenger_id
@@ -67,7 +67,7 @@ export class User {
     this.phone = user.phone || this.phone
     this.profileURL = user.profile_url || this.profileURL
   }
-  getInformation (): object {
+  getInformation (): UserObject {
     return {
       messenger_id: this.messengerID,
       first_name: this.firstName,
@@ -81,9 +81,9 @@ export class User {
       profile_url: this.profileURL
     }
   }
-  async syncInformation (chat: any): Promise<object> {
+  async syncInformation (chat: Chat): Promise<UserObject> {
     try {
-      const profile: ProfileObject = await chat.getUserProfile()
+      const profile = await chat.getUserProfile()
       profile.messenger_id = profile.id
       delete profile.id
       this.setProfile(profile)
@@ -99,18 +99,22 @@ export class User {
       throw Error(error)
     }
   }
-  async setContactInformation (chat: any) {
-    const conversation: any = await Conversation(chat)
-    const email = await Question(conversation, 'Write email')
-    if (await YesNo(conversation, `${email}, is it correct?`)) conversation.set('email', email)
-    this.setEmail(email)
-    const phone = await Question(conversation, 'Write phone')
-    if (await YesNo(conversation, `${phone}, is it correct?`)) conversation.set('phone', phone)
-    this.setPhone(phone)
+  async setContactInformation (chat: Chat): Promise<UserObject> {
+    const conversation = await createConversation(chat)
+    const email = await askQuestion(conversation, 'Write email')
+    if (await askYesNo(conversation, `${email}, is it correct?`)) {
+      conversation.set('email', email)
+      this.setEmail(email)
+    }
+    const phone = await askQuestion(conversation, 'Write phone')
+    if (await askYesNo(conversation, `${phone}, is it correct?`)) {
+      conversation.set('phone', phone)
+      this.setPhone(phone)
+    }
     await conversation.end()
     return this.getInformation()
   }
-  showContactInformation (chat: any) {
+  showContactInformation (chat: Chat) {
     return this.email && this.phone
       ? chat.sendGenericTemplate([{
         title: `${this.firstName} ${this.lastName}`,
@@ -161,11 +165,11 @@ export class User {
       throw Error(error)
     }
   }
-  async writeFeedBack (chat: any) {
-    const conversation = await Conversation(chat)
+  async writeFeedBack (chat: Chat) {
+    const conversation = await createConversation(chat)
     try {
-      const message = await Question(conversation, 'Write any remark or offer to EasyFood Team')
-      const yes = await YesNo(conversation, `You wrote feedback (${message.length} symbols). Send this feedback?`)
+      const message = await askQuestion(conversation, 'Write any remark or offer to EasyFood Team')
+      const yes = await askYesNo(conversation, `You wrote feedback (${message.length} symbols). Send this feedback?`)
       if (yes) {
         console.log(`[BOT] USER (${this.firstName} ${this.lastName}) CREATED FEEDBACK (${message.length} symbols)!`)
         await db.query(`NOTIFY feedback_message, '${JSON.stringify(message)}'`)

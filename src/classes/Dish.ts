@@ -1,4 +1,4 @@
-import { DishObject } from '../types/objects'
+import { DishObject } from '../types'
 
 export class Dish {
   id: number

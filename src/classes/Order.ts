@@ -1,11 +1,7 @@
 import db from '../database'
-import { Dish } from './Dish'
-import { Status, TypeOfRepetitions } from '../types/enums'
-import { OrderObject } from '../types/objects'
-import { Payload } from '../types'
-import { User } from './User'
-import { SelectDishesForOrder } from '../controllers/selection'
-import { Chat } from '../types/bootbot'
+import { Dish, User } from '.'
+import { SelectDishesForOrder } from '../controllers'
+import { Status, TypeOfRepetitions, OrderObject, Payload, Chat } from '../types'
 
 export class Order {
   id: number

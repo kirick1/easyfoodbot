@@ -1,6 +1,6 @@
 import db from '../database'
-import { Dish } from './Dish'
-import { DishesSetObject } from '../types/objects'
+import { Dish } from '.'
+import { DishesSetObject } from '../types'
 
 export class DishesSet {
   id: number

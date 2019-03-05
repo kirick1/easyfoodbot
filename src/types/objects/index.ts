@@ -1,5 +1,0 @@
-export { DishObject } from './dish'
-export { DishesSetObject } from './dishesSet'
-export { OrderObject } from './order'
-export { ProfileObject } from './profile'
-export { UserObject } from './user'

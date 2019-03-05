@@ -10,7 +10,7 @@ const ConnectionConfig: ConnectionConfig = {
 
 const db = new Client(ConnectionConfig)
 
-db.connect(async error => {
+db.connect(async (error: any) => {
   if (error) {
     await db.end()
     console.error('[DATABASE] ERROR DURING CONNECTION: ', error)
@@ -18,7 +18,7 @@ db.connect(async error => {
   } else console.log('[DATABASE] CONNECTED!')
 })
 
-db.on('error', error => {
+db.on('error', (error: any) => {
   console.error('[DATABASE] ERROR: ', error)
 })
 db.on('end', () => {

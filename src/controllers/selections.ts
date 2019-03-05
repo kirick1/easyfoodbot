@@ -1,14 +1,14 @@
 import { Dish, DishesSet } from '../classes'
-import { Question, YesNo, Conversation } from './conversation'
-import { Conversation as Convo, Chat } from '../types/bootbot'
+import { Conversation, Chat } from '../types'
+import { askQuestion, askYesNo, createConversation } from './conversations'
 
-export async function selectDishesSet (conversation: Convo, dishesSets: Map<string, DishesSet>): Promise<DishesSet> {
+export const selectDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet>): Promise<DishesSet> => {
   if (dishesSets.size === 0) {
     await conversation.say('There are no sets yet!')
     return conversation.end()
   }
   try {
-    const title = await Question(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) })
+    const title = await askQuestion(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) })
     if (!title || typeof title !== 'string' || !dishesSets.has(title)) {
       await conversation.say('Title was not selected!')
       return await conversation.end()
@@ -40,7 +40,7 @@ export async function selectDishesSet (conversation: Convo, dishesSets: Map<stri
     return conversation.end()
   }
 }
-export async function getSelectedDishesFromSelectedDishesSet (conversation: Convo, dishesSets: Map<string, DishesSet> = new Map(), selectedDishesSet: Map<string, Dish> = new Map(), text: string = 'Select the desired number of products'): Promise<any> {
+export const getSelectedDishesFromSelectedDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet> = new Map(), selectedDishesSet: Map<string, Dish> = new Map(), text: string = 'Select the desired number of products'): Promise<any> => {
   if (dishesSets.size === 0) {
     await conversation.say('There are no sets yet!')
     await conversation.end()
@@ -53,7 +53,7 @@ export async function getSelectedDishesFromSelectedDishesSet (conversation: Conv
   }
   const selected: DishesSet = conversation.get('selected_dishes')
   try {
-    const answer = await Question(conversation, { text, quickReplies: [...selectedDishesSet.keys(), '(Sets)', '(Submit)', '(Cancel)'] })
+    const answer = await askQuestion(conversation, { text, quickReplies: [...selectedDishesSet.keys(), '(Sets)', '(Submit)', '(Cancel)'] })
     if (typeof answer !== 'string') {
       await conversation.say('Answer is not valid!')
       await conversation.end()
@@ -64,11 +64,11 @@ export async function getSelectedDishesFromSelectedDishesSet (conversation: Conv
       return dishesSet instanceof DishesSet ? await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet.dishes, Dish.getSubmittedDishesPriceListString(selected.dishes)) : []
     } else if (answer === '(Submit)') {
       const totalPrice = selected.getTotalPrice()
-      const yes = await YesNo(conversation, `Total price is ${totalPrice.toFixed(2)}€, make order?`)
+      const yes = await askYesNo(conversation, `Total price is ${totalPrice.toFixed(2)}€, make order?`)
       await conversation.end()
       return yes ? selected.dishes : []
     } else if (answer === '(Cancel)') {
-      const yes = await YesNo(conversation, `Are you really want to cancel this order?`)
+      const yes = await askYesNo(conversation, `Are you really want to cancel this order?`)
       if (yes) {
         await conversation.say('Order was canceled!')
         await conversation.end()
@@ -98,9 +98,9 @@ export async function getSelectedDishesFromSelectedDishesSet (conversation: Conv
     return []
   }
 }
-export async function SelectDishesForOrder (chat: Chat) {
+export const SelectDishesForOrder = async (chat: Chat) => {
   try {
-    const conversation = await Conversation(chat)
+    const conversation = await createConversation(chat)
     const dishesSets = await DishesSet.getAllDishesSets()
     const selectedDishesSetDishesMap = await selectDishesSet(conversation, dishesSets)
     return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSetDishesMap.dishes)
