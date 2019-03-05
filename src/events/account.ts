@@ -1,7 +1,7 @@
 import { Chat } from '../types'
 import { User } from '../classes'
 
-export const AccountEventsHandler = async (chat: Chat, command: string, user: User) => {
+export const AccountEventsHandler = async (chat: Chat, command: string, user: User): Promise<any> => {
   try {
     switch (command) {
       case 'ACCOUNT_CONTACT_INFORMATION': {

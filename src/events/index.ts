@@ -3,7 +3,7 @@ import { Chat, Payload } from '../types'
 import { OrderEventsHandler } from './orders'
 import { AccountEventsHandler } from './account'
 
-export const PostbackEventHandler = async (payload: Payload, chat: Chat, data?: any) => {
+export const PostbackEventHandler = async (payload: Payload, chat: Chat, data?: any): Promise<any> => {
   try {
     if (data && data.captured) console.warn('[BOT] [POSTBACK] DATA CAPTURED!')
     const user = new User()

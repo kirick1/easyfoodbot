@@ -1,7 +1,7 @@
 import { Chat } from '../types'
 import { User, Order } from '../classes'
 
-export const OrderEventsHandler = async (chat: Chat, command: string, user: User) => {
+export const OrderEventsHandler = async (chat: Chat, command: string, user: User): Promise<any> => {
   try {
     switch (command) {
       case 'ORDERS_MAKE_ORDER_NOW': {

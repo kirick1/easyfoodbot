@@ -1,6 +1,6 @@
 import { Dish, DishesSet } from '../classes'
 import { Conversation, Chat } from '../types'
-import { askQuestion, askYesNo, createConversation } from './conversations'
+import { askQuestion, askYesNo, createConversation } from '.'
 
 export const selectDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet>): Promise<DishesSet> => {
   if (dishesSets.size === 0) {
@@ -40,39 +40,35 @@ export const selectDishesSet = async (conversation: Conversation, dishesSets: Ma
     return conversation.end()
   }
 }
-export const getSelectedDishesFromSelectedDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet> = new Map(), selectedDishesSet: Map<string, Dish> = new Map(), text: string = 'Select the desired number of products'): Promise<any> => {
+export const getSelectedDishesFromSelectedDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet> = new Map(), selectedDishesSet: Map<string, Dish> = new Map(), text: string = 'Select the desired number of products'): Promise<Map<string, Dish>> => {
   if (dishesSets.size === 0) {
     await conversation.say('There are no sets yet!')
-    await conversation.end()
-    return []
+    return conversation.end()
   }
   if (selectedDishesSet.size === 0) {
     await conversation.say('There are no dishes in selected set!')
-    await conversation.end()
-    return []
+    return conversation.end()
   }
   const selected: DishesSet = conversation.get('selected_dishes')
   try {
     const answer = await askQuestion(conversation, { text, quickReplies: [...selectedDishesSet.keys(), '(Sets)', '(Submit)', '(Cancel)'] })
     if (typeof answer !== 'string') {
       await conversation.say('Answer is not valid!')
-      await conversation.end()
-      return []
+      return conversation.end()
     }
     if (answer === '(Sets)') {
       const dishesSet = await selectDishesSet(conversation, dishesSets)
-      return dishesSet instanceof DishesSet ? await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet.dishes, Dish.getSubmittedDishesPriceListString(selected.dishes)) : []
+      return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet.dishes, Dish.getSubmittedDishesPriceListString(selected.dishes))
     } else if (answer === '(Submit)') {
       const totalPrice = selected.getTotalPrice()
       const yes = await askYesNo(conversation, `Total price is ${totalPrice.toFixed(2)}€, make order?`)
       await conversation.end()
-      return yes ? selected.dishes : []
+      return yes ? selected.dishes : new Map()
     } else if (answer === '(Cancel)') {
       const yes = await askYesNo(conversation, `Are you really want to cancel this order?`)
       if (yes) {
         await conversation.say('Order was canceled!')
-        await conversation.end()
-        return new Error('Order was canceled!')
+        return conversation.end()
       } else return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish.getSubmittedDishesPriceListString(selected.dishes))
     } else {
       console.log('ANSWER: ', answer)
@@ -94,11 +90,10 @@ export const getSelectedDishesFromSelectedDishesSet = async (conversation: Conve
   } catch (error) {
     console.error('[BOT] [SELECTION] ERROR GETTING SELECTED DISHES FROM SELECTED DISHES SET: ', error)
     await conversation.say('Something went wrong, please try again!')
-    await conversation.end()
-    return []
+    return conversation.end()
   }
 }
-export const SelectDishesForOrder = async (chat: Chat) => {
+export const SelectDishesForOrder = async (chat: Chat): Promise<Map<string, Dish>> => {
   try {
     const conversation = await createConversation(chat)
     const dishesSets = await DishesSet.getAllDishesSets()

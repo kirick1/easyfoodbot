@@ -27,7 +27,7 @@ export class Order {
     for (const dish of this.dishes.values()) total += dish.getTotalPrice()
     return total
   }
-  async getDishes () {
+  async getDishes (): Promise<Map<string, Dish>> {
     if (this.dishes && this.dishes.size > 0) return this.dishes
     const { rows: orderDishesIDs } = await db.query('SELECT dish_id, number FROM order_dishes WHERE order_id = $1', [this.id])
     for (const { dish_id, number: num } of orderDishesIDs) {
@@ -39,7 +39,7 @@ export class Order {
     }
     return this.dishes
   }
-  showReceipt (chat: Chat, user: User) {
+  showReceipt (chat: Chat, user: User): Promise<any> {
     return this.status !== Status.NEW
       ? chat.sendTemplate({
         template_type: 'receipt',
@@ -75,7 +75,7 @@ export class Order {
       const dishes = await SelectDishesForOrder(chat)
       const totalPrice = Dish.getDishesMapTotalPrice(dishes)
       const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice])
-      if (dishes) for (const dish of dishes) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), parseInt(dish.id, 10), parseInt(dish.numberInOrder, 10) || 1])
+      for (const dish of dishes.values()) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1])
       const order = new Order(orderData)
       await db.query(`NOTIFY new_order, '${JSON.stringify({ id: order.id, user_id: order.userID, total_price: order.getTotalPrice() })}'`)
       return order

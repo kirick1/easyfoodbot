@@ -47,7 +47,7 @@ export class User {
       return true
     } else return false
   }
-  setProfile (profile: ProfileObject) {
+  setProfile (profile: ProfileObject): void {
     this.messengerID = profile.messenger_id || this.messengerID
     this.firstName = profile.first_name || this.firstName
     this.lastName = profile.last_name || this.lastName
@@ -55,7 +55,7 @@ export class User {
     this.locale = profile.locale || this.locale
     this.gender = profile.gender || this.gender
   }
-  setUser (user: UserObject) {
+  setUser (user: UserObject): void {
     this.messengerID = user.messenger_id || this.messengerID
     this.firstName = user.first_name || this.firstName
     this.lastName = user.last_name || this.lastName
@@ -114,7 +114,7 @@ export class User {
     await conversation.end()
     return this.getInformation()
   }
-  showContactInformation (chat: Chat) {
+  showContactInformation (chat: Chat): Promise<any> {
     return this.email && this.phone
       ? chat.sendGenericTemplate([{
         title: `${this.firstName} ${this.lastName}`,
@@ -165,7 +165,7 @@ export class User {
       throw Error(error)
     }
   }
-  async writeFeedBack (chat: Chat) {
+  async writeFeedBack (chat: Chat): Promise<any> {
     const conversation = await createConversation(chat)
     try {
       const message = await askQuestion(conversation, 'Write any remark or offer to EasyFood Team')
