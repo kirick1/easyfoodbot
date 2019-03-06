@@ -13,35 +13,51 @@ class Dish {
         if (numberInOrder !== null)
             this.numberInOrder = numberInOrder || this.numberInOrder;
     }
-    inOrder() {
-        return this.numberInOrder > 0 && this.getTotalPrice() > 0.0;
-    }
-    addOne() {
-        this.numberInOrder += 1;
-        return this;
-    }
     getTitle(maxLength = 20) {
         return this.title.slice(0, maxLength).trim();
     }
     getTotalPrice() {
         return this.numberInOrder > 0 ? this.price * this.numberInOrder : this.price;
     }
-    getPriceString(currency = '€') {
-        return this.inOrder()
-            ? `${this.numberInOrder} ${this.title} ${this.getTotalPrice().toFixed(2)}${currency}`
-            : `${this.title} ${this.getTotalPrice().toFixed(2)}${currency}`;
+    getTotalPriceString(currency = '€') {
+        return `${this.getTotalPrice().toFixed(2)}${currency}`;
     }
-    static getSubmittedDishesPriceListString(dishesMap, currency = '€') {
+    inOrder() {
+        return this.numberInOrder > 0 && this.getTotalPrice() > 0.0;
+    }
+    getPriceListString() {
+        return this.inOrder()
+            ? `* (${this.numberInOrder}) ${this.title} ${this.getTotalPriceString()}`
+            : `* ${this.title} ${this.getTotalPriceString()}`;
+    }
+    static getSelectedDishesPriceListString(dishesMap, currency = '€') {
         if (dishesMap.size === 0)
             return 'No dishes!';
         let result = 'Selected dishes:\n\n';
         for (const dish of dishesMap.values())
-            result += dish.getPriceString();
-        result += `\nTotal price: ${Dish.getDishesMapTotalPrice(dishesMap).toFixed(2)}${currency}`;
+            result += dish.getPriceListString();
+        result += `\nTotal price: ${Dish.getDishesMapTotalPriceString(dishesMap, currency)}`;
         return result;
     }
     static getDishesMapTotalPrice(dishesMap) {
         return Array.from(dishesMap.values()).reduce((total, current) => total + current.getTotalPrice(), 0.0);
+    }
+    static getDishesMapTotalPriceString(dishesMap, currency = '€') {
+        return `${Dish.getDishesMapTotalPrice(dishesMap).toFixed(2)}${currency}`;
+    }
+    static async showDishesMapInformation(conversation, dishesMap) {
+        return dishesMap.size > 0
+            ? conversation.sendGenericTemplate(Array.from(dishesMap.values()).map((dish) => ({
+                title: `${dish.title} (${dish.getTotalPriceString()})`,
+                subtitle: dish.description,
+                image_url: dish.photo,
+                buttons: [{
+                        type: 'web_url',
+                        url: dish.photo,
+                        title: 'Photo'
+                    }]
+            })))
+            : conversation.say('No dishes!');
     }
 }
 exports.Dish = Dish;

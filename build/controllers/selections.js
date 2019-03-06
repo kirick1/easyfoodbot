@@ -2,52 +2,50 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const classes_1 = require("../classes");
 const _1 = require(".");
-const getSelectedDishes = (conversation) => {
-    const selectedDishes = conversation.get('selectedDishes');
-    if (selectedDishes && selectedDishes instanceof Map)
-        return selectedDishes;
-    conversation.set('selectedDishes', new Map());
-    return getSelectedDishes(conversation);
-};
-exports.selectDishesSet = async (conversation, dishesSets) => {
+var KEY;
+(function (KEY) {
+    KEY["SELECTED_DISHES"] = "SelectedDishes";
+})(KEY || (KEY = {}));
+const selectDishesSet = async (conversation, dishesSets) => {
     if (dishesSets.size === 0) {
         await conversation.say('There are no sets yet!');
         await conversation.end();
         throw Error('There are no sets yet!');
     }
-    getSelectedDishes(conversation);
-    const dishesSet = dishesSets.get(await _1.askQuestion(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) }));
-    if (!dishesSet || dishesSet.dishes.size === 0) {
+    const selectedDishesSetTitle = await _1.askQuestion(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) });
+    const selectedDishesSet = dishesSets.get(selectedDishesSetTitle);
+    if (!selectedDishesSet || !selectedDishesSet.dishes || selectedDishesSet.dishes.size === 0) {
         await conversation.say('There are no dishes in selected set!');
-        return exports.selectDishesSet(conversation, dishesSets);
+        return selectDishesSet(conversation, dishesSets);
     }
-    await conversation.sendGenericTemplate(Array.from(dishesSet.dishes.values()).map((dish) => ({
-        title: `${dish.title} (${dish.getTotalPrice().toFixed(2)})`,
-        subtitle: dish.description,
-        image_url: dish.photo,
-        buttons: [{
-                type: 'web_url',
-                url: dish.photo,
-                title: 'Photo'
-            }]
-    })));
-    return dishesSet;
+    else {
+        await classes_1.Dish.showDishesMapInformation(conversation, selectedDishesSet.dishes);
+        return selectedDishesSet.dishes;
+    }
 };
-exports.getSelectedDishesFromSelectedDishesSet = async (conversation, dishesSets, selectedDishesSet = null, text = 'Select the desired number of products') => {
-    if (selectedDishesSet === null)
-        return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, await exports.selectDishesSet(conversation, dishesSets), text);
-    const selectedDishes = getSelectedDishes(conversation);
-    const answer = await _1.askQuestion(conversation, { text: text || classes_1.Dish.getSubmittedDishesPriceListString(selectedDishes), quickReplies: [...selectedDishesSet.dishes.keys(), '(Sets)', '(Submit)', '(Cancel)'] });
+const selectDishesFromDishesSet = async (conversation, dishesSets, dishesMap = new Map(), text = null) => {
+    if (dishesMap.size === 0) {
+        const dishesSetDishes = await selectDishesSet(conversation, dishesSets);
+        return selectDishesFromDishesSet(conversation, dishesSets, dishesSetDishes, text);
+    }
+    const answer = await _1.askQuestion(conversation, { text, quickReplies: [...dishesMap.keys(), '(Sets)', '(Submit)', '(Cancel)'] });
     switch (answer) {
         case '(Sets)': {
-            const dishesSet = await exports.selectDishesSet(conversation, dishesSets);
-            return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet);
+            return selectDishesFromDishesSet(conversation, dishesSets);
         }
         case '(Submit)': {
-            if (!(await _1.askYesNo(conversation, `Total price is ${classes_1.Dish.getDishesMapTotalPrice(selectedDishes).toFixed(2)}€, make order?`)))
-                return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet);
-            await conversation.end();
-            return selectedDishes;
+            const selectedDishes = conversation.get(KEY.SELECTED_DISHES);
+            if (selectedDishes.size > 0) {
+                const submit = await _1.askYesNo(conversation, `Total price is ${classes_1.Dish.getDishesMapTotalPriceString(selectedDishes)}, make order?`);
+                if (!submit)
+                    return selectDishesFromDishesSet(conversation, dishesSets);
+                await conversation.end();
+                return selectedDishes;
+            }
+            else {
+                await conversation.say('Dishes not selected yet!');
+                return selectDishesFromDishesSet(conversation, dishesSets);
+            }
         }
         case '(Cancel)': {
             if (await _1.askYesNo(conversation, `Are you really want to cancel this order?`)) {
@@ -56,27 +54,52 @@ exports.getSelectedDishesFromSelectedDishesSet = async (conversation, dishesSets
                 throw Error('Order was canceled!');
             }
             else
-                return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet);
+                return selectDishesFromDishesSet(conversation, dishesSets);
         }
         default: {
-            const selectedDish = selectedDishesSet.dishes.get(answer);
-            if (!selectedDish)
-                return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, null);
-            selectedDishes.set(selectedDish.getTitle(), selectedDish.addOne());
-            conversation.set('selectedDishes', selectedDishes);
-            return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet);
+            const dish = dishesMap.get(answer);
+            if (!dish || !(dish instanceof classes_1.Dish))
+                return selectDishesFromDishesSet(conversation, dishesSets, dishesMap);
+            const selectedDishes = conversation.get(KEY.SELECTED_DISHES);
+            if (selectedDishes === undefined || selectedDishes === null || !(selectedDishes instanceof Map) || selectedDishes.size === 0) {
+                await conversation.say('Selected dishes not found, please try again!');
+                return selectDishesFromDishesSet(conversation, dishesSets, dishesMap, text);
+            }
+            let selectedDish = selectedDishes.get(answer);
+            if (selectedDish !== undefined && selectedDish !== null && selectedDish instanceof classes_1.Dish)
+                selectedDish.numberInOrder++;
+            else
+                selectedDish = dish;
+            selectedDishes.set(selectedDish.getTitle(), selectedDish);
+            conversation.set(KEY.SELECTED_DISHES, selectedDishes);
+            return selectDishesFromDishesSet(conversation, dishesSets, dishesMap);
         }
     }
 };
 exports.SelectDishesForOrder = async (chat) => {
     const conversation = await _1.createConversation(chat);
+    conversation.set(KEY.SELECTED_DISHES, new Map());
+    const dishesSets = await classes_1.DishesSet.getAllDishesSets();
+    if (dishesSets.size === 0) {
+        await conversation.say('There are no food sets yet!');
+        await conversation.end();
+        return new Map();
+    }
     try {
-        return await exports.getSelectedDishesFromSelectedDishesSet(conversation, await classes_1.DishesSet.getAllDishesSets(), null, 'Select the desired number of products');
+        const selectedDishes = await selectDishesFromDishesSet(conversation, dishesSets, new Map(), 'Select the desired number of products');
+        if (selectedDishes && selectedDishes.size > 0)
+            return selectedDishes;
+        else
+            return exports.SelectDishesForOrder(chat);
     }
     catch (error) {
         console.error('[BOT] [SELECTION] SELECTING DISHES FOR ORDER ERROR: ', error);
-        await conversation.say('Something went wrong, please try again later!');
-        return conversation.end();
+        if (typeof error === 'string')
+            await conversation.say(error);
+        else
+            await conversation.say('Something went wrong, please try again later!');
+        await conversation.end();
+        return new Map();
     }
 };
 //# sourceMappingURL=selections.js.map

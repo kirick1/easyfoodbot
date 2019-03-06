@@ -5,11 +5,12 @@ import { DishesSetObject } from '../types'
 export class DishesSet {
   id: number
   title: string
-  dishes: Map<string, Dish>
-  constructor (dishesSet: DishesSetObject) {
+  dishes: Map<string, Dish> = new Map<string, Dish>()
+  constructor (dishesSet: DishesSetObject, dishes?: Map<string, Dish>) {
     this.id = dishesSet.id
     this.title = dishesSet.title
-    this.dishes = dishesSet.dishes || new Map<string, Dish>()
+    this.dishes = dishesSet.dishes && dishesSet.dishes.size > 0 ? dishesSet.dishes : new Map<string, Dish>()
+    if (dishes && dishes.size > 0) this.dishes = dishes
   }
   getTitle (maxLength: number = 20): string {
     return this.title.slice(0, maxLength).trim()

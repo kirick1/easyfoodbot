@@ -3,10 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../database");
 const _1 = require(".");
 class DishesSet {
-    constructor(dishesSet) {
+    constructor(dishesSet, dishes) {
+        this.dishes = new Map();
         this.id = dishesSet.id;
         this.title = dishesSet.title;
-        this.dishes = dishesSet.dishes || new Map();
+        this.dishes = dishesSet.dishes && dishesSet.dishes.size > 0 ? dishesSet.dishes : new Map();
+        if (dishes && dishes.size > 0)
+            this.dishes = dishes;
     }
     getTitle(maxLength = 20) {
         return this.title.slice(0, maxLength).trim();
