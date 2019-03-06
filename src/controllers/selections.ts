@@ -2,105 +2,73 @@ import { Dish, DishesSet } from '../classes'
 import { Conversation, Chat } from '../types'
 import { askQuestion, askYesNo, createConversation } from '.'
 
+const getSelectedDishes = (conversation: Conversation): Map<string, Dish> => {
+  const selectedDishes = conversation.get('selectedDishes')
+  if (selectedDishes && selectedDishes instanceof Map) return selectedDishes
+  conversation.set('selectedDishes', new Map<string, Dish>())
+  return getSelectedDishes(conversation)
+}
 export const selectDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet>): Promise<DishesSet> => {
   if (dishesSets.size === 0) {
     await conversation.say('There are no sets yet!')
-    return conversation.end()
+    await conversation.end()
+    throw Error('There are no sets yet!')
   }
-  try {
-    const title = await askQuestion(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) })
-    if (!title || typeof title !== 'string' || !dishesSets.has(title)) {
-      await conversation.say('Title was not selected!')
-      return await conversation.end()
-    }
-    const dishesSet = dishesSets.has(title) ? dishesSets.get(title) : null
-    if (!dishesSet || dishesSet.dishes.size === 0) {
-      await conversation.say('There are no dishes in selected set!')
-      return await conversation.end()
-    }
-    await conversation.sendGenericTemplate(Array.from(dishesSet.dishes.values()).map((dish: Dish) => ({
-      title: `${dish.title} (${dish.getTotalPrice().toFixed(2)})`,
-      subtitle: dish.description,
-      image_url: dish.photo,
-      buttons: [{
-        type: 'web_url',
-        url: dish.photo,
-        title: 'Photo'
-      }]
-    })))
-    const selected = conversation.get('selected_dishes')
-    if (!selected) {
-      await conversation.say('Select the desired number of products')
-      conversation.set('selected_dishes', new Map())
-    }
-    return dishesSet
-  } catch (error) {
-    console.error('[BOT] [SELECTION] ERROR GETTING SELECTED SET DISHES: ', error)
-    await conversation.say('Something went wrong, please try again!')
-    return conversation.end()
-  }
-}
-export const getSelectedDishesFromSelectedDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet> = new Map(), selectedDishesSet: Map<string, Dish> = new Map(), text: string = 'Select the desired number of products'): Promise<Map<string, Dish>> => {
-  if (dishesSets.size === 0) {
-    await conversation.say('There are no sets yet!')
-    return conversation.end()
-  }
-  if (selectedDishesSet.size === 0) {
+  getSelectedDishes(conversation)
+  const dishesSet = dishesSets.get(await askQuestion(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) }))
+  if (!dishesSet || dishesSet.dishes.size === 0) {
     await conversation.say('There are no dishes in selected set!')
-    return conversation.end()
+    return selectDishesSet(conversation, dishesSets)
   }
-  const selected: DishesSet = conversation.get('selected_dishes')
-  try {
-    const answer = await askQuestion(conversation, { text, quickReplies: [...selectedDishesSet.keys(), '(Sets)', '(Submit)', '(Cancel)'] })
-    if (typeof answer !== 'string') {
-      await conversation.say('Answer is not valid!')
-      return conversation.end()
-    }
-    if (answer === '(Sets)') {
+  await conversation.sendGenericTemplate(Array.from(dishesSet.dishes.values()).map((dish: Dish) => ({
+    title: `${dish.title} (${dish.getTotalPrice().toFixed(2)})`,
+    subtitle: dish.description,
+    image_url: dish.photo,
+    buttons: [{
+      type: 'web_url',
+      url: dish.photo,
+      title: 'Photo'
+    }]
+  })))
+  return dishesSet
+}
+export const getSelectedDishesFromSelectedDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet>, selectedDishesSet: DishesSet | null = null, text: string | null = 'Select the desired number of products'): Promise<Map<string, Dish>> => {
+  if (selectedDishesSet === null) return getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, await selectDishesSet(conversation, dishesSets), text)
+  const selectedDishes = getSelectedDishes(conversation)
+  const answer = await askQuestion(conversation, { text: text || Dish.getSubmittedDishesPriceListString(selectedDishes), quickReplies: [...selectedDishesSet.dishes.keys(), '(Sets)', '(Submit)', '(Cancel)'] })
+  switch (answer) {
+    case '(Sets)': {
       const dishesSet = await selectDishesSet(conversation, dishesSets)
-      return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet.dishes, Dish.getSubmittedDishesPriceListString(selected.dishes))
-    } else if (answer === '(Submit)') {
-      const totalPrice = selected.getTotalPrice()
-      const yes = await askYesNo(conversation, `Total price is ${totalPrice.toFixed(2)}€, make order?`)
-      await conversation.end()
-      return yes ? selected.dishes : new Map()
-    } else if (answer === '(Cancel)') {
-      const yes = await askYesNo(conversation, `Are you really want to cancel this order?`)
-      if (yes) {
-        await conversation.say('Order was canceled!')
-        return conversation.end()
-      } else return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish.getSubmittedDishesPriceListString(selected.dishes))
-    } else {
-      console.log('ANSWER: ', answer)
-      console.log('SELECTED: ', selected)
-      console.log('SELECTED SET DISHES: ', selectedDishesSet)
-
-      const current = selected.dishes.get(answer)
-      console.log('CURRENT: ', current)
-      if (current) {
-        current.numberInOrder += 1
-        selected.dishes.set(answer, current)
-      } else {
-        const dish = selectedDishesSet.get(answer)
-        if (dish instanceof Dish) selected.dishes.set(answer, dish)
-      }
-      conversation.set('selected_dishes', selected)
-      return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, Dish.getSubmittedDishesPriceListString(selected.dishes))
+      return getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet)
     }
-  } catch (error) {
-    console.error('[BOT] [SELECTION] ERROR GETTING SELECTED DISHES FROM SELECTED DISHES SET: ', error)
-    await conversation.say('Something went wrong, please try again!')
-    return conversation.end()
+    case '(Submit)': {
+      if (!(await askYesNo(conversation, `Total price is ${Dish.getDishesMapTotalPrice(selectedDishes).toFixed(2)}€, make order?`))) return getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet)
+      await conversation.end()
+      return selectedDishes
+    }
+    case '(Cancel)': {
+      if (await askYesNo(conversation, `Are you really want to cancel this order?`)) {
+        await conversation.say('Order was canceled!')
+        await conversation.end()
+        throw Error('Order was canceled!')
+      } else return getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet)
+    }
+    default: {
+      const selectedDish = selectedDishesSet.dishes.get(answer)
+      if (!selectedDish) return getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, null)
+      selectedDishes.set(selectedDish.getTitle(), selectedDish.addOne())
+      conversation.set('selectedDishes', selectedDishes)
+      return getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet)
+    }
   }
 }
 export const SelectDishesForOrder = async (chat: Chat): Promise<Map<string, Dish>> => {
+  const conversation = await createConversation(chat)
   try {
-    const conversation = await createConversation(chat)
-    const dishesSets = await DishesSet.getAllDishesSets()
-    const selectedDishesSetDishesMap = await selectDishesSet(conversation, dishesSets)
-    return await getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSetDishesMap.dishes)
+    return await getSelectedDishesFromSelectedDishesSet(conversation, await DishesSet.getAllDishesSets(), null, 'Select the desired number of products')
   } catch (error) {
     console.error('[BOT] [SELECTION] SELECTING DISHES FOR ORDER ERROR: ', error)
-    throw Error(error)
+    await conversation.say('Something went wrong, please try again later!')
+    return conversation.end()
   }
 }

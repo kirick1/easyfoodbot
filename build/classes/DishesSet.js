@@ -12,10 +12,7 @@ class DishesSet {
         return this.title.slice(0, maxLength).trim();
     }
     getTotalPrice() {
-        let total = 0.0;
-        for (const dish of this.dishes.values())
-            total += dish.getTotalPrice();
-        return total;
+        return _1.Dish.getDishesMapTotalPrice(this.dishes);
     }
     async getDishes() {
         if (this.dishes.size > 0)
@@ -23,10 +20,8 @@ class DishesSet {
         const { rows: setDishesIDs } = await database_1.default.query('SELECT dish_id FROM set_dishes WHERE set_id = $1', [this.id]);
         for (const { dish_id } of setDishesIDs) {
             const { rows: [dishData] } = await database_1.default.query('SELECT id, title, description, photo, price FROM dishes WHERE id = $1', [parseInt(dish_id, 10)]);
-            if (dishData) {
-                const dish = new _1.Dish(dishData);
-                this.dishes.set(dish.getTitle(), dish);
-            }
+            const dish = new _1.Dish(dishData);
+            this.dishes.set(dish.getTitle(), dish);
         }
         return this.dishes;
     }

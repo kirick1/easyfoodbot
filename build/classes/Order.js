@@ -3,39 +3,50 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../database");
 const _1 = require(".");
 const controllers_1 = require("../controllers");
-const types_1 = require("../types");
 class Order {
     constructor(order) {
+        this.numberOfRepetitions = 0;
+        this.typeOfRepetitions = 'immediate';
+        this.status = 'new';
+        this.isCompleted = false;
+        this.dishes = new Map();
         this.id = order.id;
         this.userID = order.user_id;
         this.totalPrice = order.total_price;
         this.numberOfRepetitions = order.number_of_repetitions || 0;
-        this.typeOfRepetitions = order.type_of_repetitions || types_1.TypeOfRepetitions.IMMEDIATE;
-        this.status = order.status || types_1.Status.NEW;
+        this.typeOfRepetitions = order.type_of_repetitions;
+        this.status = order.status || 'new';
         this.isCompleted = order.is_completed;
         this.dishes = order.dishes && order.dishes.size > 0 ? order.dishes : new Map();
     }
     getTotalPrice() {
-        let total = 0.0;
-        for (const dish of this.dishes.values())
-            total += dish.getTotalPrice();
-        return total;
+        return _1.Dish.getDishesMapTotalPrice(this.dishes);
+    }
+    getInformation() {
+        return {
+            id: this.id,
+            user_id: this.userID,
+            total_price: this.getTotalPrice(),
+            number_of_repetitions: this.numberOfRepetitions,
+            type_of_repetitions: this.typeOfRepetitions,
+            status: this.status,
+            is_completed: this.isCompleted,
+            dishes: this.dishes || new Map()
+        };
     }
     async getDishes() {
-        if (this.dishes && this.dishes.size > 0)
+        if (this.dishes.size > 0)
             return this.dishes;
         const { rows: orderDishesIDs } = await database_1.default.query('SELECT dish_id, number FROM order_dishes WHERE order_id = $1', [this.id]);
         for (const { dish_id, number: num } of orderDishesIDs) {
             const { rows: [dishData] } = await database_1.default.query('SELECT id, title, description, photo, price FROM dishes WHERE id = $1', [parseInt(dish_id, 10)]);
-            if (dishData) {
-                const dish = new _1.Dish(dishData, num);
-                this.dishes.set(dish.getTitle(), dish);
-            }
+            const dish = new _1.Dish(dishData, num);
+            this.dishes.set(dish.getTitle(), dish);
         }
         return this.dishes;
     }
     showReceipt(chat, user) {
-        return this.status !== types_1.Status.NEW
+        return this.status !== 'new'
             ? chat.sendTemplate({
                 template_type: 'receipt',
                 recipient_name: `${user.firstName} ${user.lastName}`,
@@ -46,15 +57,14 @@ class Order {
                 summary: {
                     total_cost: this.getTotalPrice()
                 },
-                elements: this.dishes && this.dishes.size > 0
-                    ? Array.from(this.dishes.values()).map(dish => ({
-                        title: dish.title,
-                        subtitle: dish.description,
-                        quantity: dish.numberInOrder || 1,
-                        price: dish.getTotalPrice().toFixed(2),
-                        currency: 'EUR',
-                        image_url: dish.photo
-                    })) : []
+                elements: Array.from(this.dishes.values()).map((dish) => ({
+                    title: dish.title,
+                    subtitle: dish.description,
+                    quantity: dish.numberInOrder,
+                    price: dish.getTotalPrice().toFixed(2),
+                    currency: 'EUR',
+                    image_url: dish.photo
+                })) || []
             }) : chat.sendGenericTemplate([{
                 title: `Order #${this.id}`,
                 subtitle: `Price: ${this.getTotalPrice().toFixed(2)}€`,
@@ -73,7 +83,7 @@ class Order {
             for (const dish of dishes.values())
                 await database_1.default.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1]);
             const order = new Order(orderData);
-            await database_1.default.query(`NOTIFY new_order, '${JSON.stringify({ id: order.id, user_id: order.userID, total_price: order.getTotalPrice() })}'`);
+            await database_1.default.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`);
             return order;
         }
         catch (error) {
@@ -81,7 +91,7 @@ class Order {
             throw Error(error);
         }
     }
-    static async toArray(orders = []) {
+    static async toArray(orders) {
         const result = [];
         for (const orderData of orders) {
             const order = new Order(orderData);

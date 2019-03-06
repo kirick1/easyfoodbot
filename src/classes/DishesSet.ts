@@ -9,29 +9,25 @@ export class DishesSet {
   constructor (dishesSet: DishesSetObject) {
     this.id = dishesSet.id
     this.title = dishesSet.title
-    this.dishes = dishesSet.dishes || new Map()
+    this.dishes = dishesSet.dishes || new Map<string, Dish>()
   }
   getTitle (maxLength: number = 20): string {
     return this.title.slice(0, maxLength).trim()
   }
   getTotalPrice (): number {
-    let total = 0.0
-    for (const dish of this.dishes.values()) total += dish.getTotalPrice()
-    return total
+    return Dish.getDishesMapTotalPrice(this.dishes)
   }
-  async getDishes () {
+  async getDishes (): Promise<Map<string, Dish>> {
     if (this.dishes.size > 0) return this.dishes
     const { rows: setDishesIDs } = await db.query('SELECT dish_id FROM set_dishes WHERE set_id = $1', [this.id])
     for (const { dish_id } of setDishesIDs) {
       const { rows: [dishData] } = await db.query('SELECT id, title, description, photo, price FROM dishes WHERE id = $1', [parseInt(dish_id, 10)])
-      if (dishData) {
-        const dish = new Dish(dishData)
-        this.dishes.set(dish.getTitle(), dish)
-      }
+      const dish = new Dish(dishData)
+      this.dishes.set(dish.getTitle(), dish)
     }
     return this.dishes
   }
-  static async getAllDishesSets () {
+  static async getAllDishesSets (): Promise<Map<string, DishesSet>> {
     const map: Map<string, DishesSet> = new Map()
     const { rows: dishesSets } = await db.query('SELECT id, title FROM sets')
     for (const dishesSetData of dishesSets) {

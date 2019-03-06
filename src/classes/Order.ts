@@ -1,46 +1,54 @@
 import db from '../database'
 import { Dish, User } from '.'
 import { SelectDishesForOrder } from '../controllers'
-import { Status, TypeOfRepetitions, OrderObject, Payload, Chat } from '../types'
+import { OrderObject, MessagePayload, PostbackPayload, Chat, Status, TypeOfRepetitions } from '../types'
 
 export class Order {
-  id: number
-  userID: number
-  totalPrice: number
-  numberOfRepetitions: number
-  typeOfRepetitions: string
-  status: Status
-  isCompleted: boolean
-  dishes: Map<string, Dish>
+  id: number | null
+  userID: number | null
+  totalPrice: number | null
+  numberOfRepetitions: number | null = 0
+  typeOfRepetitions: TypeOfRepetitions = 'immediate'
+  status: Status = 'new'
+  isCompleted: boolean = false
+  dishes: Map<string, Dish> = new Map<string, Dish>()
   constructor (order: OrderObject) {
     this.id = order.id
     this.userID = order.user_id
     this.totalPrice = order.total_price
     this.numberOfRepetitions = order.number_of_repetitions || 0
-    this.typeOfRepetitions = order.type_of_repetitions || TypeOfRepetitions.IMMEDIATE
-    this.status = order.status || Status.NEW
+    this.typeOfRepetitions = order.type_of_repetitions
+    this.status = order.status || 'new'
     this.isCompleted = order.is_completed
-    this.dishes = order.dishes && order.dishes.size > 0 ? order.dishes : new Map()
+    this.dishes = order.dishes && order.dishes.size > 0 ? order.dishes : new Map<string, Dish>()
   }
   getTotalPrice (): number {
-    let total = 0.0
-    for (const dish of this.dishes.values()) total += dish.getTotalPrice()
-    return total
+    return Dish.getDishesMapTotalPrice(this.dishes)
+  }
+  getInformation (): OrderObject {
+    return {
+      id: this.id,
+      user_id: this.userID,
+      total_price: this.getTotalPrice(),
+      number_of_repetitions: this.numberOfRepetitions,
+      type_of_repetitions: this.typeOfRepetitions,
+      status: this.status,
+      is_completed: this.isCompleted,
+      dishes: this.dishes || new Map<string, Dish>()
+    }
   }
   async getDishes (): Promise<Map<string, Dish>> {
-    if (this.dishes && this.dishes.size > 0) return this.dishes
+    if (this.dishes.size > 0) return this.dishes
     const { rows: orderDishesIDs } = await db.query('SELECT dish_id, number FROM order_dishes WHERE order_id = $1', [this.id])
     for (const { dish_id, number: num } of orderDishesIDs) {
       const { rows: [dishData] } = await db.query('SELECT id, title, description, photo, price FROM dishes WHERE id = $1', [parseInt(dish_id, 10)])
-      if (dishData) {
-        const dish = new Dish(dishData, num)
-        this.dishes.set(dish.getTitle(), dish)
-      }
+      const dish = new Dish(dishData, num)
+      this.dishes.set(dish.getTitle(), dish)
     }
     return this.dishes
   }
-  showReceipt (chat: Chat, user: User): Promise<any> {
-    return this.status !== Status.NEW
+  showReceipt (chat: Chat, user: User): Promise<void> {
+    return this.status !== 'new'
       ? chat.sendTemplate({
         template_type: 'receipt',
         recipient_name: `${user.firstName} ${user.lastName}`,
@@ -51,15 +59,14 @@ export class Order {
         summary: {
           total_cost: this.getTotalPrice()
         },
-        elements: this.dishes && this.dishes.size > 0
-          ? Array.from(this.dishes.values()).map(dish => ({
-            title: dish.title,
-            subtitle: dish.description,
-            quantity: dish.numberInOrder || 1,
-            price: dish.getTotalPrice().toFixed(2),
-            currency: 'EUR',
-            image_url: dish.photo
-          })) : []
+        elements: Array.from(this.dishes.values()).map((dish: Dish) => ({
+          title: dish.title,
+          subtitle: dish.description,
+          quantity: dish.numberInOrder,
+          price: dish.getTotalPrice().toFixed(2),
+          currency: 'EUR',
+          image_url: dish.photo
+        })) || []
       }) : chat.sendGenericTemplate([{
         title: `Order #${this.id}`,
         subtitle: `Price: ${this.getTotalPrice().toFixed(2)}€`,
@@ -68,7 +75,7 @@ export class Order {
           type: 'postback',
           payload: `ORDERS_CANCEL___${this.id}`
         }]
-      }], (payload: Payload) => console.log('PAYLOAD: ', payload))
+      }], (payload: MessagePayload | PostbackPayload) => console.log('PAYLOAD: ', payload))
   }
   static async makeImmediateOrder (chat: Chat, user: User): Promise<Order> {
     try {
@@ -77,14 +84,14 @@ export class Order {
       const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice])
       for (const dish of dishes.values()) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1])
       const order = new Order(orderData)
-      await db.query(`NOTIFY new_order, '${JSON.stringify({ id: order.id, user_id: order.userID, total_price: order.getTotalPrice() })}'`)
+      await db.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`)
       return order
     } catch (error) {
       console.error('[BOT] [ORDER] ERROR MAKING IMMEDIATE ORDER: ', error)
       throw Error(error)
     }
   }
-  static async toArray (orders: Array<OrderObject> = []): Promise<Array<Order>> {
+  static async toArray (orders: Array<OrderObject>): Promise<Array<Order>> {
     const result = []
     for (const orderData of orders) {
       const order = new Order(orderData)

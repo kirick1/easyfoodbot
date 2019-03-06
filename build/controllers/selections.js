@@ -2,115 +2,81 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const classes_1 = require("../classes");
 const _1 = require(".");
+const getSelectedDishes = (conversation) => {
+    const selectedDishes = conversation.get('selectedDishes');
+    if (selectedDishes && selectedDishes instanceof Map)
+        return selectedDishes;
+    conversation.set('selectedDishes', new Map());
+    return getSelectedDishes(conversation);
+};
 exports.selectDishesSet = async (conversation, dishesSets) => {
     if (dishesSets.size === 0) {
         await conversation.say('There are no sets yet!');
-        return conversation.end();
+        await conversation.end();
+        throw Error('There are no sets yet!');
     }
-    try {
-        const title = await _1.askQuestion(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) });
-        if (!title || typeof title !== 'string' || !dishesSets.has(title)) {
-            await conversation.say('Title was not selected!');
-            return await conversation.end();
-        }
-        const dishesSet = dishesSets.has(title) ? dishesSets.get(title) : null;
-        if (!dishesSet || dishesSet.dishes.size === 0) {
-            await conversation.say('There are no dishes in selected set!');
-            return await conversation.end();
-        }
-        await conversation.sendGenericTemplate(Array.from(dishesSet.dishes.values()).map((dish) => ({
-            title: `${dish.title} (${dish.getTotalPrice().toFixed(2)})`,
-            subtitle: dish.description,
-            image_url: dish.photo,
-            buttons: [{
-                    type: 'web_url',
-                    url: dish.photo,
-                    title: 'Photo'
-                }]
-        })));
-        const selected = conversation.get('selected_dishes');
-        if (!selected) {
-            await conversation.say('Select the desired number of products');
-            conversation.set('selected_dishes', new Map());
-        }
-        return dishesSet;
-    }
-    catch (error) {
-        console.error('[BOT] [SELECTION] ERROR GETTING SELECTED SET DISHES: ', error);
-        await conversation.say('Something went wrong, please try again!');
-        return conversation.end();
-    }
-};
-exports.getSelectedDishesFromSelectedDishesSet = async (conversation, dishesSets = new Map(), selectedDishesSet = new Map(), text = 'Select the desired number of products') => {
-    if (dishesSets.size === 0) {
-        await conversation.say('There are no sets yet!');
-        return conversation.end();
-    }
-    if (selectedDishesSet.size === 0) {
+    getSelectedDishes(conversation);
+    const dishesSet = dishesSets.get(await _1.askQuestion(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) }));
+    if (!dishesSet || dishesSet.dishes.size === 0) {
         await conversation.say('There are no dishes in selected set!');
-        return conversation.end();
+        return exports.selectDishesSet(conversation, dishesSets);
     }
-    const selected = conversation.get('selected_dishes');
-    try {
-        const answer = await _1.askQuestion(conversation, { text, quickReplies: [...selectedDishesSet.keys(), '(Sets)', '(Submit)', '(Cancel)'] });
-        if (typeof answer !== 'string') {
-            await conversation.say('Answer is not valid!');
-            return conversation.end();
-        }
-        if (answer === '(Sets)') {
+    await conversation.sendGenericTemplate(Array.from(dishesSet.dishes.values()).map((dish) => ({
+        title: `${dish.title} (${dish.getTotalPrice().toFixed(2)})`,
+        subtitle: dish.description,
+        image_url: dish.photo,
+        buttons: [{
+                type: 'web_url',
+                url: dish.photo,
+                title: 'Photo'
+            }]
+    })));
+    return dishesSet;
+};
+exports.getSelectedDishesFromSelectedDishesSet = async (conversation, dishesSets, selectedDishesSet = null, text = 'Select the desired number of products') => {
+    if (selectedDishesSet === null)
+        return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, await exports.selectDishesSet(conversation, dishesSets), text);
+    const selectedDishes = getSelectedDishes(conversation);
+    const answer = await _1.askQuestion(conversation, { text: text || classes_1.Dish.getSubmittedDishesPriceListString(selectedDishes), quickReplies: [...selectedDishesSet.dishes.keys(), '(Sets)', '(Submit)', '(Cancel)'] });
+    switch (answer) {
+        case '(Sets)': {
             const dishesSet = await exports.selectDishesSet(conversation, dishesSets);
-            return await exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet.dishes, classes_1.Dish.getSubmittedDishesPriceListString(selected.dishes));
+            return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, dishesSet);
         }
-        else if (answer === '(Submit)') {
-            const totalPrice = selected.getTotalPrice();
-            const yes = await _1.askYesNo(conversation, `Total price is ${totalPrice.toFixed(2)}€, make order?`);
+        case '(Submit)': {
+            if (!(await _1.askYesNo(conversation, `Total price is ${classes_1.Dish.getDishesMapTotalPrice(selectedDishes).toFixed(2)}€, make order?`)))
+                return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet);
             await conversation.end();
-            return yes ? selected.dishes : new Map();
+            return selectedDishes;
         }
-        else if (answer === '(Cancel)') {
-            const yes = await _1.askYesNo(conversation, `Are you really want to cancel this order?`);
-            if (yes) {
+        case '(Cancel)': {
+            if (await _1.askYesNo(conversation, `Are you really want to cancel this order?`)) {
                 await conversation.say('Order was canceled!');
-                return conversation.end();
+                await conversation.end();
+                throw Error('Order was canceled!');
             }
             else
-                return await exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, classes_1.Dish.getSubmittedDishesPriceListString(selected.dishes));
+                return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet);
         }
-        else {
-            console.log('ANSWER: ', answer);
-            console.log('SELECTED: ', selected);
-            console.log('SELECTED SET DISHES: ', selectedDishesSet);
-            const current = selected.dishes.get(answer);
-            console.log('CURRENT: ', current);
-            if (current) {
-                current.numberInOrder += 1;
-                selected.dishes.set(answer, current);
-            }
-            else {
-                const dish = selectedDishesSet.get(answer);
-                if (dish instanceof classes_1.Dish)
-                    selected.dishes.set(answer, dish);
-            }
-            conversation.set('selected_dishes', selected);
-            return await exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, classes_1.Dish.getSubmittedDishesPriceListString(selected.dishes));
+        default: {
+            const selectedDish = selectedDishesSet.dishes.get(answer);
+            if (!selectedDish)
+                return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet, null);
+            selectedDishes.set(selectedDish.getTitle(), selectedDish.addOne());
+            conversation.set('selectedDishes', selectedDishes);
+            return exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSet);
         }
-    }
-    catch (error) {
-        console.error('[BOT] [SELECTION] ERROR GETTING SELECTED DISHES FROM SELECTED DISHES SET: ', error);
-        await conversation.say('Something went wrong, please try again!');
-        return conversation.end();
     }
 };
 exports.SelectDishesForOrder = async (chat) => {
+    const conversation = await _1.createConversation(chat);
     try {
-        const conversation = await _1.createConversation(chat);
-        const dishesSets = await classes_1.DishesSet.getAllDishesSets();
-        const selectedDishesSetDishesMap = await exports.selectDishesSet(conversation, dishesSets);
-        return await exports.getSelectedDishesFromSelectedDishesSet(conversation, dishesSets, selectedDishesSetDishesMap.dishes);
+        return await exports.getSelectedDishesFromSelectedDishesSet(conversation, await classes_1.DishesSet.getAllDishesSets(), null, 'Select the desired number of products');
     }
     catch (error) {
         console.error('[BOT] [SELECTION] SELECTING DISHES FOR ORDER ERROR: ', error);
-        throw Error(error);
+        await conversation.say('Something went wrong, please try again later!');
+        return conversation.end();
     }
 };
 //# sourceMappingURL=selections.js.map

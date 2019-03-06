@@ -1,5 +1,4 @@
 import { Dish } from '../classes'
-import { Status, TypeOfRepetitions } from '.'
 
 export interface DishObject {
   id: number
@@ -14,15 +13,19 @@ export interface DishesSetObject {
   title: string
   dishes?: Map<string, Dish>
 }
+
+export type Status = 'new' | 'progress' | 'done' | 'canceled'
+export type TypeOfRepetitions = 'immediate'
+
 export interface OrderObject {
-  id: number
-  user_id: number
-  total_price: number
-  number_of_repetitions: number
+  id: number | null
+  user_id: number | null
+  total_price: number | null
+  number_of_repetitions: number | null
   type_of_repetitions: TypeOfRepetitions
   status: Status
   is_completed: boolean
-  dishes?: Map<string, Dish>
+  dishes?: Map<string, Dish> | null
 }
 export interface ProfileObject {
   id: number
@@ -45,11 +48,13 @@ export interface UserObject {
   phone: string | null
   profile_url: string | null
 }
-export interface Payload {
+export interface MessagePayload {
   message: {
     text: string
   }
-  postback?: {
+}
+export interface PostbackPayload {
+  postback: {
     payload: string
   }
 }

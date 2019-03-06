@@ -29,33 +29,34 @@ export class User {
       this.profileURL = user.profile_url
     }
   }
-  setEmail (value?: string): boolean {
-    if (value && isEmail(value)) {
+  setEmail (value: string): boolean {
+    if (isEmail(value)) {
       this.email = value
       return true
     } else return false
   }
-  setPhone (value?: string): boolean {
+  setPhone (value: string): boolean {
     if (value) {
       this.phone = value
       return true
     } else return false
   }
-  setProfileURL (value?: string): boolean {
-    if (value && isURL(value)) {
+  setProfileURL (value: string): boolean {
+    if (isURL(value)) {
       this.profileURL = value
       return true
     } else return false
   }
-  setProfile (profile: ProfileObject): void {
+  setProfile (profile: ProfileObject): UserObject {
     this.messengerID = profile.messenger_id || this.messengerID
     this.firstName = profile.first_name || this.firstName
     this.lastName = profile.last_name || this.lastName
     this.profilePic = profile.profile_pic || this.profilePic
     this.locale = profile.locale || this.locale
     this.gender = profile.gender || this.gender
+    return this.getInformation()
   }
-  setUser (user: UserObject): void {
+  setUser (user: UserObject): UserObject {
     this.messengerID = user.messenger_id || this.messengerID
     this.firstName = user.first_name || this.firstName
     this.lastName = user.last_name || this.lastName
@@ -66,6 +67,7 @@ export class User {
     this.email = user.email || this.email
     this.phone = user.phone || this.phone
     this.profileURL = user.profile_url || this.profileURL
+    return this.getInformation()
   }
   getInformation (): UserObject {
     return {
@@ -82,22 +84,16 @@ export class User {
     }
   }
   async syncInformation (chat: Chat): Promise<UserObject> {
-    try {
-      const profile = await chat.getUserProfile()
-      profile.messenger_id = profile.id
-      delete profile.id
-      this.setProfile(profile)
-      const { rows: [user] } = await db.query('SELECT messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url FROM users WHERE messenger_id = $1', [this.messengerID])
-      if (!user) {
-        const { rows: [created] } = await db.query('INSERT INTO users (messenger_id, first_name, last_name, profile_pic, locale, gender, email, phone, profile_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url', [this.messengerID, this.firstName, this.lastName, this.profilePic, this.locale, this.gender, this.email, this.phone, this.profileURL])
-        this.setUser(created)
-      } else this.setUser(user)
-      return this.getInformation()
-    } catch (error) {
-      console.error('[BOT] [USER] SYNC ERROR: ', error)
-      await chat.say('Something went wrong, please try again later!')
-      throw Error(error)
-    }
+    const profile = await chat.getUserProfile()
+    profile.messenger_id = profile.id
+    delete profile.id
+    this.setProfile(profile)
+    const { rows: [user] } = await db.query('SELECT messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url FROM users WHERE messenger_id = $1', [this.messengerID])
+    if (!user) {
+      const { rows: [created] } = await db.query('INSERT INTO users (messenger_id, first_name, last_name, profile_pic, locale, gender, email, phone, profile_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url', [this.messengerID, this.firstName, this.lastName, this.profilePic, this.locale, this.gender, this.email, this.phone, this.profileURL])
+      this.setUser(created)
+    } else this.setUser(user)
+    return this.getInformation()
   }
   async setContactInformation (chat: Chat): Promise<UserObject> {
     const conversation = await createConversation(chat)
@@ -115,7 +111,7 @@ export class User {
     return this.getInformation()
   }
   showContactInformation (chat: Chat): Promise<any> {
-    return this.email && this.phone
+    return this.email !== null && this.phone !== null
       ? chat.sendGenericTemplate([{
         title: `${this.firstName} ${this.lastName}`,
         subtitle: `Email: ${this.email}\nPhone: ${this.phone}`,
@@ -128,57 +124,32 @@ export class User {
       : chat.say('Contact information for your account not found!')
   }
   async getCreatedOrders (): Promise<Array<Order>> {
-    try {
-      const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'new'`, [this.id])
-      return await Order.toArray(rows)
-    } catch (error) {
-      console.error('[BOT] ERROR GETTING CREATED ORDERS: ', error)
-      throw Error(error)
-    }
+    const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'new'`, [this.id])
+    return Order.toArray(rows)
   }
   async getCurrentOrders (): Promise<Array<Order>> {
-    try {
-      const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'progress'`, [this.id])
-      return await Order.toArray(rows)
-    } catch (error) {
-      console.error('[BOT] ERROR GETTING CURRENT ORDERS: ', error)
-      throw Error(error)
-    }
+    const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'progress'`, [this.id])
+    return Order.toArray(rows)
   }
   async getCompletedOrders (): Promise<Array<Order>> {
-    try {
-      const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'done'`, [this.id])
-      return await Order.toArray(rows)
-    } catch (error) {
-      console.error('[BOT] ERROR GETTING COMPLETED ORDERS: ', error)
-      throw Error(error)
-    }
+    const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'done'`, [this.id])
+    return Order.toArray(rows)
   }
-  static async cancelOrder (order: Order): Promise<Order> {
-    try {
-      const { rows: [canceledOrderData] } = await db.query(`UPDATE orders SET status = 'canceled', completed_at = now() at time zone 'utc', updated_at = now() at time zone 'utc' WHERE id = $1 RETURNING *`, [order.id])
-      const canceled = new Order(canceledOrderData)
-      await canceled.getDishes()
-      return canceled
-    } catch (error) {
-      console.error('[BOT] ERROR CANCELING ORDER: ', error)
-      throw Error(error)
-    }
+  static async cancelOrder (order: Order): Promise<boolean> {
+    const { rows: [canceledOrderData] } = await db.query(`UPDATE orders SET status = 'canceled', completed_at = now() at time zone 'utc', updated_at = now() at time zone 'utc' WHERE id = $1 RETURNING *`, [order.id])
+    const canceledOrder = new Order(canceledOrderData)
+    return canceledOrder.status === 'canceled'
   }
-  async writeFeedBack (chat: Chat): Promise<any> {
+  async writeFeedBack (chat: Chat): Promise<boolean> {
     const conversation = await createConversation(chat)
-    try {
-      const message = await askQuestion(conversation, 'Write any remark or offer to EasyFood Team')
-      const yes = await askYesNo(conversation, `You wrote feedback (${message.length} symbols). Send this feedback?`)
-      if (yes) {
-        console.log(`[BOT] USER (${this.firstName} ${this.lastName}) CREATED FEEDBACK (${message.length} symbols)!`)
-        await db.query(`NOTIFY feedback_message, '${JSON.stringify(message)}'`)
-        await conversation.say('Your feedback was received, thank you for choosing us!')
-      }
-    } catch (error) {
-      console.error('[BOT] ERROR NOTIFYING USER FEEDBACK: ', error)
-    } finally {
-      await conversation.end()
+    const message = await askQuestion(conversation, 'Write any remark or offer to EasyFood Team')
+    const yes = await askYesNo(conversation, `You wrote feedback (${message.length} symbols). Send this feedback?`)
+    if (yes) {
+      console.log(`[BOT] USER (${this.firstName} ${this.lastName}) CREATED FEEDBACK (${message.length} symbols)!`)
+      await db.query(`NOTIFY feedback_message, '${JSON.stringify({ message })}'`)
+      await conversation.say('Your feedback was received, thank you for choosing us!')
     }
+    await conversation.end()
+    return yes
   }
 }

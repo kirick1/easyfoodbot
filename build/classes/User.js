@@ -30,7 +30,7 @@ class User {
         }
     }
     setEmail(value) {
-        if (value && validator_1.isEmail(value)) {
+        if (validator_1.isEmail(value)) {
             this.email = value;
             return true;
         }
@@ -46,7 +46,7 @@ class User {
             return false;
     }
     setProfileURL(value) {
-        if (value && validator_1.isURL(value)) {
+        if (validator_1.isURL(value)) {
             this.profileURL = value;
             return true;
         }
@@ -60,6 +60,7 @@ class User {
         this.profilePic = profile.profile_pic || this.profilePic;
         this.locale = profile.locale || this.locale;
         this.gender = profile.gender || this.gender;
+        return this.getInformation();
     }
     setUser(user) {
         this.messengerID = user.messenger_id || this.messengerID;
@@ -72,6 +73,7 @@ class User {
         this.email = user.email || this.email;
         this.phone = user.phone || this.phone;
         this.profileURL = user.profile_url || this.profileURL;
+        return this.getInformation();
     }
     getInformation() {
         return {
@@ -88,25 +90,18 @@ class User {
         };
     }
     async syncInformation(chat) {
-        try {
-            const profile = await chat.getUserProfile();
-            profile.messenger_id = profile.id;
-            delete profile.id;
-            this.setProfile(profile);
-            const { rows: [user] } = await database_1.default.query('SELECT messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url FROM users WHERE messenger_id = $1', [this.messengerID]);
-            if (!user) {
-                const { rows: [created] } = await database_1.default.query('INSERT INTO users (messenger_id, first_name, last_name, profile_pic, locale, gender, email, phone, profile_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url', [this.messengerID, this.firstName, this.lastName, this.profilePic, this.locale, this.gender, this.email, this.phone, this.profileURL]);
-                this.setUser(created);
-            }
-            else
-                this.setUser(user);
-            return this.getInformation();
+        const profile = await chat.getUserProfile();
+        profile.messenger_id = profile.id;
+        delete profile.id;
+        this.setProfile(profile);
+        const { rows: [user] } = await database_1.default.query('SELECT messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url FROM users WHERE messenger_id = $1', [this.messengerID]);
+        if (!user) {
+            const { rows: [created] } = await database_1.default.query('INSERT INTO users (messenger_id, first_name, last_name, profile_pic, locale, gender, email, phone, profile_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url', [this.messengerID, this.firstName, this.lastName, this.profilePic, this.locale, this.gender, this.email, this.phone, this.profileURL]);
+            this.setUser(created);
         }
-        catch (error) {
-            console.error('[BOT] [USER] SYNC ERROR: ', error);
-            await chat.say('Something went wrong, please try again later!');
-            throw Error(error);
-        }
+        else
+            this.setUser(user);
+        return this.getInformation();
     }
     async setContactInformation(chat) {
         const conversation = await controllers_1.createConversation(chat);
@@ -124,7 +119,7 @@ class User {
         return this.getInformation();
     }
     showContactInformation(chat) {
-        return this.email && this.phone
+        return this.email !== null && this.phone !== null
             ? chat.sendGenericTemplate([{
                     title: `${this.firstName} ${this.lastName}`,
                     subtitle: `Email: ${this.email}\nPhone: ${this.phone}`,
@@ -137,64 +132,33 @@ class User {
             : chat.say('Contact information for your account not found!');
     }
     async getCreatedOrders() {
-        try {
-            const { rows } = await database_1.default.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'new'`, [this.id]);
-            return await _1.Order.toArray(rows);
-        }
-        catch (error) {
-            console.error('[BOT] ERROR GETTING CREATED ORDERS: ', error);
-            throw Error(error);
-        }
+        const { rows } = await database_1.default.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'new'`, [this.id]);
+        return _1.Order.toArray(rows);
     }
     async getCurrentOrders() {
-        try {
-            const { rows } = await database_1.default.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'progress'`, [this.id]);
-            return await _1.Order.toArray(rows);
-        }
-        catch (error) {
-            console.error('[BOT] ERROR GETTING CURRENT ORDERS: ', error);
-            throw Error(error);
-        }
+        const { rows } = await database_1.default.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'progress'`, [this.id]);
+        return _1.Order.toArray(rows);
     }
     async getCompletedOrders() {
-        try {
-            const { rows } = await database_1.default.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'done'`, [this.id]);
-            return await _1.Order.toArray(rows);
-        }
-        catch (error) {
-            console.error('[BOT] ERROR GETTING COMPLETED ORDERS: ', error);
-            throw Error(error);
-        }
+        const { rows } = await database_1.default.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'done'`, [this.id]);
+        return _1.Order.toArray(rows);
     }
     static async cancelOrder(order) {
-        try {
-            const { rows: [canceledOrderData] } = await database_1.default.query(`UPDATE orders SET status = 'canceled', completed_at = now() at time zone 'utc', updated_at = now() at time zone 'utc' WHERE id = $1 RETURNING *`, [order.id]);
-            const canceled = new _1.Order(canceledOrderData);
-            await canceled.getDishes();
-            return canceled;
-        }
-        catch (error) {
-            console.error('[BOT] ERROR CANCELING ORDER: ', error);
-            throw Error(error);
-        }
+        const { rows: [canceledOrderData] } = await database_1.default.query(`UPDATE orders SET status = 'canceled', completed_at = now() at time zone 'utc', updated_at = now() at time zone 'utc' WHERE id = $1 RETURNING *`, [order.id]);
+        const canceledOrder = new _1.Order(canceledOrderData);
+        return canceledOrder.status === 'canceled';
     }
     async writeFeedBack(chat) {
         const conversation = await controllers_1.createConversation(chat);
-        try {
-            const message = await controllers_1.askQuestion(conversation, 'Write any remark or offer to EasyFood Team');
-            const yes = await controllers_1.askYesNo(conversation, `You wrote feedback (${message.length} symbols). Send this feedback?`);
-            if (yes) {
-                console.log(`[BOT] USER (${this.firstName} ${this.lastName}) CREATED FEEDBACK (${message.length} symbols)!`);
-                await database_1.default.query(`NOTIFY feedback_message, '${JSON.stringify(message)}'`);
-                await conversation.say('Your feedback was received, thank you for choosing us!');
-            }
+        const message = await controllers_1.askQuestion(conversation, 'Write any remark or offer to EasyFood Team');
+        const yes = await controllers_1.askYesNo(conversation, `You wrote feedback (${message.length} symbols). Send this feedback?`);
+        if (yes) {
+            console.log(`[BOT] USER (${this.firstName} ${this.lastName}) CREATED FEEDBACK (${message.length} symbols)!`);
+            await database_1.default.query(`NOTIFY feedback_message, '${JSON.stringify({ message })}'`);
+            await conversation.say('Your feedback was received, thank you for choosing us!');
         }
-        catch (error) {
-            console.error('[BOT] ERROR NOTIFYING USER FEEDBACK: ', error);
-        }
-        finally {
-            await conversation.end();
-        }
+        await conversation.end();
+        return yes;
     }
 }
 exports.User = User;
