@@ -4,6 +4,9 @@ const classes_1 = require("../classes");
 const _1 = require(".");
 var KEY;
 (function (KEY) {
+    KEY["SETS"] = "(Sets)";
+    KEY["SUBMIT"] = "(Submit)";
+    KEY["CANCEL"] = "(Cancel)";
     KEY["SELECTED_DISHES"] = "SelectedDishes";
 })(KEY || (KEY = {}));
 const selectDishesSet = async (conversation, dishesSets) => {
@@ -28,12 +31,19 @@ const selectDishesFromDishesSet = async (conversation, dishesSets, dishesMap = n
         const dishesSetDishes = await selectDishesSet(conversation, dishesSets);
         return selectDishesFromDishesSet(conversation, dishesSets, dishesSetDishes, text);
     }
-    const answer = await _1.askQuestion(conversation, { text, quickReplies: [...dishesMap.keys(), '(Sets)', '(Submit)', '(Cancel)'] });
+    const selectedDishes = conversation.get(KEY.SELECTED_DISHES);
+    if (selectedDishes === undefined || selectedDishes === null || !(selectedDishes instanceof Map)) {
+        await conversation.say('Selected dishes not found, please try again!');
+        return selectDishesFromDishesSet(conversation, dishesSets, dishesMap, text);
+    }
+    if (text === null && selectedDishes.size > 0)
+        text = classes_1.Dish.getSelectedDishesPriceListString(selectedDishes);
+    const answer = await _1.askQuestion(conversation, { text, quickReplies: [...dishesMap.keys(), KEY.SETS, KEY.SUBMIT, KEY.CANCEL] });
     switch (answer) {
-        case '(Sets)': {
+        case KEY.SETS: {
             return selectDishesFromDishesSet(conversation, dishesSets);
         }
-        case '(Submit)': {
+        case KEY.SUBMIT: {
             const selectedDishes = conversation.get(KEY.SELECTED_DISHES);
             if (selectedDishes.size > 0) {
                 const submit = await _1.askYesNo(conversation, `Total price is ${classes_1.Dish.getDishesMapTotalPriceString(selectedDishes)}, make order?`);
@@ -47,7 +57,7 @@ const selectDishesFromDishesSet = async (conversation, dishesSets, dishesMap = n
                 return selectDishesFromDishesSet(conversation, dishesSets);
             }
         }
-        case '(Cancel)': {
+        case KEY.CANCEL: {
             if (await _1.askYesNo(conversation, `Are you really want to cancel this order?`)) {
                 await conversation.say('Order was canceled!');
                 await conversation.end();
@@ -57,20 +67,21 @@ const selectDishesFromDishesSet = async (conversation, dishesSets, dishesMap = n
                 return selectDishesFromDishesSet(conversation, dishesSets);
         }
         default: {
+            console.log('ANSWER: ', answer);
+            console.log('DISHES MAP: ', dishesMap);
             const dish = dishesMap.get(answer);
-            if (!dish || !(dish instanceof classes_1.Dish))
+            console.log('DISH: ', dish);
+            if (dish === undefined || dish === null || !(dish instanceof classes_1.Dish))
                 return selectDishesFromDishesSet(conversation, dishesSets, dishesMap);
-            const selectedDishes = conversation.get(KEY.SELECTED_DISHES);
-            if (selectedDishes === undefined || selectedDishes === null || !(selectedDishes instanceof Map) || selectedDishes.size === 0) {
-                await conversation.say('Selected dishes not found, please try again!');
-                return selectDishesFromDishesSet(conversation, dishesSets, dishesMap, text);
-            }
             let selectedDish = selectedDishes.get(answer);
-            if (selectedDish !== undefined && selectedDish !== null && selectedDish instanceof classes_1.Dish)
-                selectedDish.numberInOrder++;
-            else
-                selectedDish = dish;
-            selectedDishes.set(selectedDish.getTitle(), selectedDish);
+            if (selectedDish !== undefined && selectedDish !== null && selectedDish instanceof classes_1.Dish) {
+                selectedDish.numberInOrder += 1;
+                selectedDishes.set(selectedDish.getTitle(), selectedDish);
+            }
+            else {
+                dish.numberInOrder = 0;
+                selectedDishes.set(dish.getTitle(), dish);
+            }
             conversation.set(KEY.SELECTED_DISHES, selectedDishes);
             return selectDishesFromDishesSet(conversation, dishesSets, dishesMap);
         }
