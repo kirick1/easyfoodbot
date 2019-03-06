@@ -1,6 +1,6 @@
 import { ProfileObject } from '.'
 
-export interface BootbotObject {
+export interface Bot {
   accessToken: string
   verifyToken: string
   appSecret: string
@@ -41,9 +41,9 @@ export interface Element {
   buttons: Array<any>
 }
 export interface Chat {
-  say (message: any, options?: SendMessageOptions): Promise<any>
-  sendTextMessage (text: string, quickReplies: Array<QuickReply | string>, options?: SendMessageOptions): Promise<any>
-  sendButtonTemplate (text: string, buttons: Array<any>, options?: SendMessageOptions): Promise<any>
+  say (message: any, options?: SendMessageOptions): Promise<void>
+  sendTextMessage (text: string, quickReplies: Array<QuickReply | string>, options?: SendMessageOptions): Promise<void>
+  sendButtonTemplate (text: string, buttons: Array<any>, options?: SendMessageOptions): Promise<void>
   sendGenericTemplate (cards: Array<Element>, options?: SendMessageOptions | Function): Promise<any>
   sendListTemplate (elements: Array<Element>, buttons: Array<any>, options?: SendMessageOptions): Promise<any>
   sendTemplate (payload: object, options?: SendMessageOptions): Promise<any>
@@ -53,7 +53,7 @@ export interface Chat {
   sendRequest (body: object, endpoint: string, method: string): Promise<any>
   sendTypingIndicator (milliseconds: number): Promise<any>
   getUserProfile (): Promise<ProfileObject>
-  conversation (factory: Function): any
+  conversation (factory: Function): void
 }
 export interface Conversation extends Chat {
   ask (question: string | object | Array<any>, answer: Function, callbacks?: Array<Function>, options?: SendMessageOptions): any
@@ -61,8 +61,8 @@ export interface Conversation extends Chat {
   isActive (): boolean
   isWaitingForAnswer (): boolean
   stopWaitingForAnswer (): any
-  start (): any
-  end (): Promise<any>
+  start (): void
+  end (): Promise<void>
   get (property: string): any
   set (property: string, value: any): any
 }
