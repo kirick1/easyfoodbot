@@ -5,6 +5,7 @@ const _1 = require(".");
 const controllers_1 = require("../controllers");
 class Order {
     constructor(order) {
+        this.totalPrice = 0.0;
         this.numberOfRepetitions = 0;
         this.typeOfRepetitions = 'immediate';
         this.status = 'new';
@@ -12,12 +13,12 @@ class Order {
         this.dishes = new Map();
         this.id = order.id;
         this.userID = order.user_id;
-        this.totalPrice = order.total_price;
+        this.totalPrice = order.total_price || 0.0;
         this.numberOfRepetitions = order.number_of_repetitions || 0;
-        this.typeOfRepetitions = order.type_of_repetitions;
+        this.typeOfRepetitions = order.type_of_repetitions || 'immediate';
         this.status = order.status || 'new';
         this.isCompleted = order.is_completed;
-        this.dishes = order.dishes && order.dishes.size > 0 ? order.dishes : new Map();
+        this.dishes = order.dishes instanceof Map && order.dishes.size > 0 ? order.dishes : new Map();
     }
     getTotalPrice() {
         return _1.Dish.getDishesMapTotalPrice(this.dishes);
@@ -31,7 +32,7 @@ class Order {
             type_of_repetitions: this.typeOfRepetitions,
             status: this.status,
             is_completed: this.isCompleted,
-            dishes: this.dishes || new Map()
+            dishes: this.dishes
         };
     }
     async getDishes() {
@@ -75,16 +76,20 @@ class Order {
                     }]
             }], (payload) => console.log('PAYLOAD: ', payload));
     }
+    static async create(dishes, user, notify = true) {
+        const totalPrice = _1.Dish.getDishesMapTotalPrice(dishes);
+        const { rows: [orderData] } = await database_1.default.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice]);
+        for (const dish of dishes.values())
+            await database_1.default.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1]);
+        const order = new Order(orderData);
+        if (notify)
+            await database_1.default.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`);
+        return order;
+    }
     static async makeImmediateOrder(chat, user) {
         try {
             const dishes = await controllers_1.SelectDishesForOrder(chat);
-            const totalPrice = _1.Dish.getDishesMapTotalPrice(dishes);
-            const { rows: [orderData] } = await database_1.default.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice]);
-            for (const dish of dishes.values())
-                await database_1.default.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1]);
-            const order = new Order(orderData);
-            await database_1.default.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`);
-            return order;
+            return await Order.create(dishes, user);
         }
         catch (error) {
             console.error('[BOT] [ORDER] ERROR MAKING IMMEDIATE ORDER: ', error);

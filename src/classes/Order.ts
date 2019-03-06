@@ -6,7 +6,7 @@ import { OrderObject, MessagePayload, PostbackPayload, Chat, Status, TypeOfRepet
 export class Order {
   id: number | null
   userID: number | null
-  totalPrice: number | null
+  totalPrice: number | null = 0.0
   numberOfRepetitions: number | null = 0
   typeOfRepetitions: TypeOfRepetitions = 'immediate'
   status: Status = 'new'
@@ -15,12 +15,12 @@ export class Order {
   constructor (order: OrderObject) {
     this.id = order.id
     this.userID = order.user_id
-    this.totalPrice = order.total_price
+    this.totalPrice = order.total_price || 0.0
     this.numberOfRepetitions = order.number_of_repetitions || 0
-    this.typeOfRepetitions = order.type_of_repetitions
+    this.typeOfRepetitions = order.type_of_repetitions || 'immediate'
     this.status = order.status || 'new'
     this.isCompleted = order.is_completed
-    this.dishes = order.dishes && order.dishes.size > 0 ? order.dishes : new Map<string, Dish>()
+    this.dishes = order.dishes instanceof Map && order.dishes.size > 0 ? order.dishes : new Map<string, Dish>()
   }
   getTotalPrice (): number {
     return Dish.getDishesMapTotalPrice(this.dishes)
@@ -34,7 +34,7 @@ export class Order {
       type_of_repetitions: this.typeOfRepetitions,
       status: this.status,
       is_completed: this.isCompleted,
-      dishes: this.dishes || new Map<string, Dish>()
+      dishes: this.dishes
     }
   }
   async getDishes (): Promise<Map<string, Dish>> {
@@ -77,15 +77,18 @@ export class Order {
         }]
       }], (payload: MessagePayload | PostbackPayload) => console.log('PAYLOAD: ', payload))
   }
+  static async create (dishes: Map<string, Dish>, user: User, notify: boolean = true): Promise<Order> {
+    const totalPrice = Dish.getDishesMapTotalPrice(dishes)
+    const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice])
+    for (const dish of dishes.values()) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1])
+    const order = new Order(orderData)
+    if (notify) await db.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`)
+    return order
+  }
   static async makeImmediateOrder (chat: Chat, user: User): Promise<Order> {
     try {
       const dishes = await SelectDishesForOrder(chat)
-      const totalPrice = Dish.getDishesMapTotalPrice(dishes)
-      const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice])
-      for (const dish of dishes.values()) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1])
-      const order = new Order(orderData)
-      await db.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`)
-      return order
+      return await Order.create(dishes, user)
     } catch (error) {
       console.error('[BOT] [ORDER] ERROR MAKING IMMEDIATE ORDER: ', error)
       throw Error(error)
