@@ -71,7 +71,7 @@ const selectDishesFromDishesSet = async (conversation: Conversation, dishesSets:
         selectedDish.numberInOrder += 1
         selectedDishes.set(selectedDish.getTitle(), selectedDish)
       } else {
-        dish.numberInOrder = 0
+        dish.numberInOrder = 1
         selectedDishes.set(dish.getTitle(), dish)
       }
       conversation.set(KEY.SELECTED_DISHES, selectedDishes)

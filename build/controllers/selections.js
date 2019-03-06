@@ -79,7 +79,7 @@ const selectDishesFromDishesSet = async (conversation, dishesSets, dishesMap = n
                 selectedDishes.set(selectedDish.getTitle(), selectedDish);
             }
             else {
-                dish.numberInOrder = 0;
+                dish.numberInOrder = 1;
                 selectedDishes.set(dish.getTitle(), dish);
             }
             conversation.set(KEY.SELECTED_DISHES, selectedDishes);
