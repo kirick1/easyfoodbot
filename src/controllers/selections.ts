@@ -61,10 +61,7 @@ const selectDishesFromDishesSet = async (conversation: Conversation, dishesSets:
       } else return selectDishesFromDishesSet(conversation, dishesSets)
     }
     default: {
-      console.log('ANSWER: ', answer)
-      console.log('DISHES MAP: ', dishesMap)
       const dish = dishesMap.get(answer)
-      console.log('DISH: ', dish)
       if (dish === undefined || dish === null || !(dish instanceof Dish)) return selectDishesFromDishesSet(conversation, dishesSets, dishesMap)
       let selectedDish = selectedDishes.get(answer)
       if (selectedDish !== undefined && selectedDish !== null && selectedDish instanceof Dish) {

@@ -30,8 +30,8 @@ export class Dish {
   }
   getPriceListString (): string {
     return this.inOrder()
-      ? `* (${this.numberInOrder}) ${this.title} ${this.getTotalPriceString()}`
-      : `* ${this.title} ${this.getTotalPriceString()}`
+      ? `* (${this.numberInOrder}) ${this.title} ${this.getTotalPriceString()}\n`
+      : `* ${this.title} ${this.getTotalPriceString()}\n`
   }
   static getSelectedDishesPriceListString (dishesMap: Map<string, Dish>, currency: string = '€'): string {
     if (dishesMap.size === 0) return 'No dishes!'

@@ -27,8 +27,8 @@ class Dish {
     }
     getPriceListString() {
         return this.inOrder()
-            ? `* (${this.numberInOrder}) ${this.title} ${this.getTotalPriceString()}`
-            : `* ${this.title} ${this.getTotalPriceString()}`;
+            ? `* (${this.numberInOrder}) ${this.title} ${this.getTotalPriceString()}\n`
+            : `* ${this.title} ${this.getTotalPriceString()}\n`;
     }
     static getSelectedDishesPriceListString(dishesMap, currency = '€') {
         if (dishesMap.size === 0)
