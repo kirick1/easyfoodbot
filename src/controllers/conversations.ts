@@ -14,9 +14,8 @@ export const askQuestion = (conversation: Conversation, question: any, askConfir
   const text = payload.message.text
   if (validator(text)) {
     if (!askConfirmation) return resolve(text)
-    return resolve(
-      await askYesNo(conversation, `${text}, is it correct?`)
-        ? text
-        : await askQuestion(conversation, question, askConfirmation, validator))
+    return resolve(await askYesNo(conversation, `${text}, is it correct?`)
+      ? text
+      : await askQuestion(conversation, question, askConfirmation, validator))
   } else return resolve(await askQuestion(conversation, question, askConfirmation, validator))
 }))

@@ -1,3 +1,3 @@
-export { Bot, Chat, Conversation } from './bot'
+export { Bot, Chat, Conversation, ProfileObject } from './bot'
 export { PostbackButton, Element, Summary, Address, ReceiptTemplate, GenericTemplate } from './templates'
-export { DishObject, DishesSetObject, UserObject, ProfileObject, OrderObject, Status, TypeOfRepetitions, MessagePayload, PostbackPayload } from './objects'
+export { DishObject, DishesSetObject, UserObject, OrderObject, Status, TypeOfRepetitions, MessagePayload, PostbackPayload } from './objects'
