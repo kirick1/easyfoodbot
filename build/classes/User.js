@@ -89,6 +89,9 @@ class User {
             profile_url: this.profileURL
         };
     }
+    getFullName() {
+        return `${this.firstName} ${this.lastName}`;
+    }
     async syncInformation(chat) {
         const profile = await chat.getUserProfile();
         profile.messenger_id = profile.id;
@@ -120,15 +123,7 @@ class User {
     }
     showContactInformation(chat) {
         return this.email !== null && this.phone !== null
-            ? chat.sendGenericTemplate([{
-                    title: `${this.firstName} ${this.lastName}`,
-                    subtitle: `Email: ${this.email}\nPhone: ${this.phone}`,
-                    buttons: [{
-                            title: 'Edit',
-                            type: 'postback',
-                            payload: `ACCOUNT_CONTACT_EDIT___${this.id}`
-                        }]
-                }])
+            ? chat.sendGenericTemplate([_1.Template.getContactInformationGenericMessage(this)])
             : chat.say('Contact information for your account not found!');
     }
     async getCreatedOrders() {

@@ -1,4 +1,5 @@
 export { Dish } from './Dish'
 export { User } from './User'
 export { Order } from './Order'
+export { Template } from './Template'
 export { DishesSet } from './DishesSet'

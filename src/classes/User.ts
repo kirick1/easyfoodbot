@@ -1,5 +1,5 @@
 import db from '../database'
-import { Order } from '.'
+import { Order, Template } from '.'
 import { isEmail, isURL } from 'validator'
 import { UserObject, ProfileObject, Chat } from '../types'
 import { createConversation, askYesNo, askQuestion } from '../controllers'
@@ -83,6 +83,9 @@ export class User {
       profile_url: this.profileURL
     }
   }
+  getFullName (): string {
+    return `${this.firstName} ${this.lastName}`
+  }
   async syncInformation (chat: Chat): Promise<UserObject> {
     const profile = await chat.getUserProfile()
     profile.messenger_id = profile.id
@@ -112,15 +115,7 @@ export class User {
   }
   showContactInformation (chat: Chat): Promise<any> {
     return this.email !== null && this.phone !== null
-      ? chat.sendGenericTemplate([{
-        title: `${this.firstName} ${this.lastName}`,
-        subtitle: `Email: ${this.email}\nPhone: ${this.phone}`,
-        buttons: [{
-          title: 'Edit',
-          type: 'postback',
-          payload: `ACCOUNT_CONTACT_EDIT___${this.id}`
-        }]
-      }])
+      ? chat.sendGenericTemplate([Template.getContactInformationGenericMessage(this)])
       : chat.say('Contact information for your account not found!')
   }
   async getCreatedOrders (): Promise<Array<Order>> {

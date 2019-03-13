@@ -1,7 +1,8 @@
 export interface PostbackButton {
   type: string
   title: string
-  payload: string
+  url?: string
+  payload?: string
 }
 export interface GenericTemplate {
   title: string

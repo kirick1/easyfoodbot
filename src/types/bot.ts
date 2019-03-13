@@ -1,3 +1,5 @@
+import { MessagePayload, PostbackPayload } from './objects'
+
 export interface Bot {
   accessToken: string
   verifyToken: string
@@ -32,6 +34,7 @@ export interface Bot {
   conversation (recipientId: Recipient | string, factory: Function): any
   handleFacebookData (data: object | any): any
 }
+
 export type AttachmentType = 'image' | 'audio' | 'video' | 'file'
 export type Action = 'mark_seen' | 'typing_on' | 'typing_off'
 export type Button = object | any
@@ -51,8 +54,8 @@ export interface SendMessageOptions {
   messagingType?: string | 'RESPONSE'
   notificationType?: string
   tag?: string
-  onDelivery?: Function
-  onRead?: Function
+  onDelivery?: (payload: MessagePayload | PostbackPayload, chat: Chat, data?: any) => void
+  onRead?: (payload: MessagePayload | PostbackPayload, chat: Chat, data?: any) => void
 }
 export interface Message {
   text: string
@@ -77,26 +80,30 @@ export interface ProfileObject {
   messenger_id?: number
 }
 export interface Chat {
-  say (message: any, options?: SendMessageOptions): Promise<void>
+  bot: Bot
+  userId: string
+  say (message: Message | string | object | Array<any>, options?: SendMessageOptions): Promise<void>
   sendTextMessage (text: string, quickReplies: Array<QuickReply | string>, options?: SendMessageOptions): Promise<void>
-  sendButtonTemplate (text: string, buttons: Array<any>, options?: SendMessageOptions): Promise<void>
-  sendGenericTemplate (cards: Array<Element>, options?: SendMessageOptions | Function): Promise<any>
-  sendListTemplate (elements: Array<Element>, buttons: Array<any>, options?: SendMessageOptions): Promise<any>
-  sendTemplate (payload: object, options?: SendMessageOptions): Promise<any>
-  sendAttachment (type: string, url: string, quickReplies: Array<QuickReply>, options?: SendMessageOptions): Promise<any>
-  sendAction (action: string, options?: SendMessageOptions): Promise<any>
-  sendMessage (message: object, options?: SendMessageOptions): Promise<any>
-  sendRequest (body: object, endpoint: string, method: string): Promise<any>
-  sendTypingIndicator (milliseconds: number): Promise<any>
+  sendButtonTemplate (text: string, buttons: Array<string | Button>, options?: SendMessageOptions): Promise<void>
+  sendGenericTemplate (cards: Array<Element>, options?: SendMessageOptions | Function): Promise<void>
+  sendListTemplate (elements: Array<Element>, buttons: Array<string | Button>, options?: SendMessageOptions): Promise<void>
+  sendTemplate (payload: object, options?: SendMessageOptions): Promise<void>
+  sendAttachment (type: AttachmentType, url: string, quickReplies: Array<QuickReply>, options?: SendMessageOptions): Promise<void>
+  sendAction (action: string, options?: SendMessageOptions): Promise<void>
+  sendMessage (message: Message, options?: SendMessageOptions): Promise<void>
+  sendRequest (body: object, endpoint: string, method: string): Promise<void>
+  sendTypingIndicator (milliseconds: number): Promise<void>
   getUserProfile (): Promise<ProfileObject>
   conversation (factory: Function): void
 }
 export interface Conversation extends Chat {
-  ask (question: string | object | Array<any>, answer: Function, callbacks?: Array<Function>, options?: SendMessageOptions): any
-  respond (payload: object, data: object): any
+  bot: Bot
+  userId: string
+  ask (question: string | object | Array<any>, answer: Function, callbacks?: Array<Function>, options?: SendMessageOptions): Promise<void>
+  respond (payload: object, data: object): Promise<void>
   isActive (): boolean
   isWaitingForAnswer (): boolean
-  stopWaitingForAnswer (): any
+  stopWaitingForAnswer (): void
   start (): void
   end (): Promise<void>
   get (property: string): any

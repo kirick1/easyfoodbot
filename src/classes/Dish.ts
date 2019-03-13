@@ -1,4 +1,5 @@
-import { DishObject, Chat, Conversation } from '../types'
+import { DishObject, Chat, Conversation, Element, GenericTemplate, ReceiptTemplate } from '../types'
+import { Template } from './Template'
 
 export class Dish {
   id: number
@@ -16,6 +17,9 @@ export class Dish {
     this.numberInOrder = dish.numberInOrder || 0
     if (numberInOrder !== null) this.numberInOrder = numberInOrder || this.numberInOrder
   }
+  isInOrder (): boolean {
+    return this.numberInOrder > 0 && this.getTotalPrice() > 0.0
+  }
   getTitle (maxLength: number = 20): string {
     return this.title.slice(0, maxLength).trim()
   }
@@ -25,13 +29,20 @@ export class Dish {
   getTotalPriceString (currency: string = '€'): string {
     return `${this.getTotalPrice().toFixed(2)}${currency}`
   }
-  inOrder (): boolean {
-    return this.numberInOrder > 0 && this.getTotalPrice() > 0.0
-  }
   getPriceListString (): string {
-    return this.inOrder()
+    return this.isInOrder()
       ? `* (${this.numberInOrder}) ${this.title} ${this.getTotalPriceString()}\n`
       : `* ${this.title} ${this.getTotalPriceString()}\n`
+  }
+  getElementData (): Element {
+    return {
+      title: this.title,
+      subtitle: this.description,
+      quantity: this.numberInOrder,
+      price: this.getTotalPrice(),
+      currency: 'EUR',
+      image_url: this.photo
+    }
   }
   static getSelectedDishesPriceListString (dishesMap: Map<string, Dish>, currency: string = '€'): string {
     if (dishesMap.size === 0) return 'No dishes!'
@@ -48,16 +59,7 @@ export class Dish {
   }
   static async showDishesMapInformation (conversation: Conversation | Chat, dishesMap: Map<string, Dish>): Promise<any> {
     return dishesMap.size > 0
-      ? conversation.sendGenericTemplate(Array.from(dishesMap.values()).map((dish: Dish) => ({
-        title: `${dish.title} (${dish.getTotalPriceString()})`,
-        subtitle: dish.description,
-        image_url: dish.photo,
-        buttons: [{
-          type: 'web_url',
-          url: dish.photo,
-          title: 'Photo'
-        }]
-      })))
+      ? conversation.sendGenericTemplate(Template.getDishesMapGenericMessage(dishesMap))
       : conversation.say('No dishes!')
   }
 }

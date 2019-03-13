@@ -1,7 +1,7 @@
 import db from '../database'
-import { Dish, User } from '.'
+import { Dish, User, Template } from '.'
 import { SelectDishesForOrder } from '../controllers'
-import { OrderObject, MessagePayload, PostbackPayload, Chat, Status, TypeOfRepetitions } from '../types'
+import { OrderObject, MessagePayload, PostbackPayload, Chat, Status, TypeOfRepetitions, ReceiptTemplate, GenericTemplate } from '../types'
 
 export class Order {
   id: number | null
@@ -47,35 +47,20 @@ export class Order {
     }
     return this.dishes
   }
-  showReceipt (chat: Chat, user: User): Promise<void> {
-    return this.status !== 'new'
-      ? chat.sendTemplate({
-        template_type: 'receipt',
-        recipient_name: `${user.firstName} ${user.lastName}`,
-        merchant_name: 'EasyFood Delivery',
-        order_number: `${this.id}`,
-        currency: 'EUR',
-        payment_method: 'Cash',
-        summary: {
-          total_cost: this.getTotalPrice()
-        },
-        elements: Array.from(this.dishes.values()).map((dish: Dish) => ({
-          title: dish.title,
-          subtitle: dish.description,
-          quantity: dish.numberInOrder,
-          price: dish.getTotalPrice().toFixed(2),
-          currency: 'EUR',
-          image_url: dish.photo
-        })) || []
-      }) : chat.sendGenericTemplate([{
-        title: `Order #${this.id}`,
-        subtitle: `Price: ${this.getTotalPrice().toFixed(2)}€`,
-        buttons: [{
-          title: 'Cancel',
-          type: 'postback',
-          payload: `ORDERS_CANCEL___${this.id}`
-        }]
-      }], (payload: MessagePayload | PostbackPayload) => console.log('PAYLOAD: ', payload))
+  async getDishesArray (): Promise<Array<Dish>> {
+    const dishes = await this.getDishes()
+    return Array.from(dishes.values())
+  }
+  async showReceipt (chat: Chat, user: User): Promise<void> {
+    return this.status === 'new'
+      ? chat.sendTemplate(await Template.getOrderReceiptMessage(this, user))
+      : chat.sendGenericTemplate([await Template.getOrderGenericMessage(this)])
+  }
+  static async getOrderByID (orderID: number | string): Promise<Order> {
+    const { rows: [orderData] } = await db.query('SELECT * FROM orders WHERE id = $1', [orderID])
+    const order = new Order(orderData)
+    await order.getDishes()
+    return order
   }
   static async create (dishes: Map<string, Dish>, user: User, notify: boolean = true): Promise<Order> {
     const totalPrice = Dish.getDishesMapTotalPrice(dishes)
@@ -102,11 +87,5 @@ export class Order {
       result.push(order)
     }
     return result
-  }
-  static async getOrderByID (orderID: number | string): Promise<Order> {
-    const { rows: [orderData] } = await db.query('SELECT * FROM orders WHERE id = $1', [orderID])
-    const order = new Order(orderData)
-    await order.getDishes()
-    return order
   }
 }
