@@ -4,6 +4,7 @@ export const GreetingText = [
     text: 'Hello, {{user.full_name}}! Welcome to EasyFood Bot!'
   }
 ]
+
 export const PersistentMenu = [
   {
     title: 'Make order',
