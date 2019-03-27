@@ -1,4 +1,4 @@
-import { DishObject, Chat, Conversation, Element, GenericTemplate, ReceiptTemplate } from '../types'
+import { DishObject, Chat, Conversation, Element } from '../types'
 import { Template } from './Template'
 
 export class Dish {

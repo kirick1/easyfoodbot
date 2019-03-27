@@ -15,7 +15,7 @@ const selectDishesSet = async (conversation: Conversation, dishesSets: Map<strin
     await conversation.end()
     throw Error('There are no sets yet!')
   }
-  const selectedDishesSetTitle = await askQuestion(conversation, { text: 'Food sets', quickReplies: Array.from(dishesSets.keys()) })
+  const selectedDishesSetTitle = await askQuestion(conversation, { text: 'Available dishes sets:', quickReplies: Array.from(dishesSets.keys()) })
   const selectedDishesSet = dishesSets.get(selectedDishesSetTitle)
   if (!selectedDishesSet || !selectedDishesSet.dishes || selectedDishesSet.dishes.size === 0) {
     await conversation.say('There are no dishes in selected set!')

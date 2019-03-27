@@ -6,4 +6,6 @@ var conversations_1 = require("./conversations");
 exports.createConversation = conversations_1.createConversation;
 exports.askQuestion = conversations_1.askQuestion;
 exports.askYesNo = conversations_1.askYesNo;
+exports.askEmail = conversations_1.askEmail;
+exports.askPhoneNumber = conversations_1.askPhoneNumber;
 //# sourceMappingURL=index.js.map

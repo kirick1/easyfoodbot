@@ -15,7 +15,10 @@ exports.askQuestion = (conversation, question, askConfirmation = false, validato
     else
         return resolve(await exports.askQuestion(conversation, question, askConfirmation, validator));
 }));
-exports.askEmail = (conversation, text) => new Promise((resolve) => conversation.ask({ text, quickReplies: [{
-            type: 'email'
-        }] }, async (payload) => console.log(payload)));
+exports.askEmail = (conversation) => new Promise((resolve) => conversation.ask({ text: 'Add email', quickReplies: [{
+            content_type: 'user_email'
+        }] }, async (payload) => resolve(payload.message.text)));
+exports.askPhoneNumber = (conversation) => new Promise((resolve) => conversation.ask({ text: 'Add mobile phone', quickReplies: [{
+            content_type: 'user_phone_number'
+        }] }, async (payload) => resolve(payload.message.text)));
 //# sourceMappingURL=conversations.js.map

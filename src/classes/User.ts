@@ -2,7 +2,7 @@ import db from '../database'
 import { Order, Template } from '.'
 import { isEmail, isURL } from 'validator'
 import { UserObject, ProfileObject, Chat } from '../types'
-import { createConversation, askYesNo, askQuestion } from '../controllers'
+import { createConversation, askYesNo, askQuestion, askEmail, askPhoneNumber } from '../controllers'
 
 export class User {
   messengerID: number | null = null
@@ -29,15 +29,17 @@ export class User {
       this.profileURL = user.profile_url
     }
   }
-  setEmail (value: string): boolean {
+  async setEmail (value: string): Promise<boolean> {
     if (isEmail(value)) {
       this.email = value
+      await db.query(`UPDATE users SET email = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.email, this.messengerID])
       return true
     } else return false
   }
-  setPhone (value: string): boolean {
+  async setPhone (value: string): Promise<boolean> {
     if (value) {
       this.phone = value
+      await db.query(`UPDATE users SET phone = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.phone, this.messengerID])
       return true
     } else return false
   }
@@ -100,16 +102,12 @@ export class User {
   }
   async setContactInformation (chat: Chat): Promise<UserObject> {
     const conversation = await createConversation(chat)
-    const email = await askQuestion(conversation, 'Write email')
-    if (await askYesNo(conversation, `${email}, is it correct?`)) {
-      conversation.set('email', email)
-      this.setEmail(email)
-    }
-    const phone = await askQuestion(conversation, 'Write phone')
-    if (await askYesNo(conversation, `${phone}, is it correct?`)) {
-      conversation.set('phone', phone)
-      this.setPhone(phone)
-    }
+    const email = await askEmail(conversation)
+    conversation.set('email', email)
+    await this.setEmail(email)
+    const phone = await askPhoneNumber(conversation)
+    conversation.set('phone', phone)
+    await this.setPhone(phone)
     await conversation.end()
     return this.getInformation()
   }

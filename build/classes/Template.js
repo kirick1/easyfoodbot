@@ -10,6 +10,7 @@ class Template {
             currency: 'EUR',
             payment_method: 'Cash',
             summary: {
+                subtotal: order.getTotalPrice(),
                 total_cost: order.getTotalPrice()
             },
             elements: (await order.getDishesArray()).map((dish) => dish.getElementData()) || []

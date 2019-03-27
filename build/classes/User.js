@@ -29,17 +29,19 @@ class User {
             this.profileURL = user.profile_url;
         }
     }
-    setEmail(value) {
+    async setEmail(value) {
         if (validator_1.isEmail(value)) {
             this.email = value;
+            await database_1.default.query(`UPDATE users SET email = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.email, this.messengerID]);
             return true;
         }
         else
             return false;
     }
-    setPhone(value) {
+    async setPhone(value) {
         if (value) {
             this.phone = value;
+            await database_1.default.query(`UPDATE users SET phone = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.phone, this.messengerID]);
             return true;
         }
         else
@@ -108,16 +110,12 @@ class User {
     }
     async setContactInformation(chat) {
         const conversation = await controllers_1.createConversation(chat);
-        const email = await controllers_1.askQuestion(conversation, 'Write email');
-        if (await controllers_1.askYesNo(conversation, `${email}, is it correct?`)) {
-            conversation.set('email', email);
-            this.setEmail(email);
-        }
-        const phone = await controllers_1.askQuestion(conversation, 'Write phone');
-        if (await controllers_1.askYesNo(conversation, `${phone}, is it correct?`)) {
-            conversation.set('phone', phone);
-            this.setPhone(phone);
-        }
+        const email = await controllers_1.askEmail(conversation);
+        conversation.set('email', email);
+        await this.setEmail(email);
+        const phone = await controllers_1.askPhoneNumber(conversation);
+        conversation.set('phone', phone);
+        await this.setPhone(phone);
         await conversation.end();
         return this.getInformation();
     }
