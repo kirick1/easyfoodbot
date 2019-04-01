@@ -12,6 +12,7 @@ export class Order {
   status: Status = 'new'
   isCompleted: boolean = false
   dishes: Map<string, Dish> = new Map<string, Dish>()
+  location: number | null = null
   constructor (order: OrderObject) {
     this.id = order.id
     this.userID = order.user_id
@@ -21,6 +22,7 @@ export class Order {
     this.status = order.status || 'new'
     this.isCompleted = order.is_completed
     this.dishes = order.dishes instanceof Map && order.dishes.size > 0 ? order.dishes : new Map<string, Dish>()
+    this.location = order.location
   }
   getTotalPrice (): number {
     return Dish.getDishesMapTotalPrice(this.dishes)
@@ -34,7 +36,8 @@ export class Order {
       type_of_repetitions: this.typeOfRepetitions,
       status: this.status,
       is_completed: this.isCompleted,
-      dishes: this.dishes
+      dishes: this.dishes,
+      location: this.location
     }
   }
   async getDishes (): Promise<Map<string, Dish>> {

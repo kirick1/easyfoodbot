@@ -32,6 +32,7 @@ export interface OrderObject {
   status: Status
   is_completed: boolean
   dishes?: Map<string, Dish> | null
+  location: number | null
 }
 export interface UserObject {
   messenger_id: number | null
@@ -44,14 +45,14 @@ export interface UserObject {
   email: string | null
   phone: string | null
   profile_url: string | null
-  location: string | null
+  location: number | null
 }
 export interface LocationObject {
-  id: number | null
-  title: string | null
-  url: string | null
-  latitude: number | null
-  longitude: number | null
+  id: number
+  title: string
+  url: string
+  latitude: number
+  longitude: number
 }
 export interface MessagePayload {
   message: {

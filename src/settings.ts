@@ -41,14 +41,24 @@ export const PersistentMenu = [
         type: 'nested',
         call_to_actions: [
           {
-            title: 'Show information',
+            title: 'Show contact information',
             type: 'postback',
-            payload: 'ACCOUNT_CONTACT_INFORMATION'
+            payload: 'ACCOUNT_SHOW_CONTACT_INFORMATION'
           },
           {
-            title: 'Update information',
+            title: 'Update contact information',
             type: 'postback',
-            payload: 'ACCOUNT_DELIVERY_INFORMATION'
+            payload: 'ACCOUNT_UPDATE_CONTACT_INFORMATION'
+          },
+          {
+            title: 'Show default location',
+            type: 'postback',
+            payload: 'ACCOUNT_SHOW_DEFAULT_LOCATION'
+          },
+          {
+            title: 'Update default location',
+            type: 'postback',
+            payload: 'ACCOUNT_UPDATE_DEFAULT_LOCATION'
           }
         ]
       },

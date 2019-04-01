@@ -1,7 +1,7 @@
 import db from '../database'
-import { Order, Template } from '.'
 import { isEmail, isURL } from 'validator'
-import { UserObject, ProfileObject, LocationObject, Coordinates, Chat } from '../types'
+import { Order, Template, Location } from '.'
+import { UserObject, ProfileObject, Coordinates, Chat } from '../types'
 import { createConversation, askYesNo, askQuestion, askEmail, askPhoneNumber } from '../controllers'
 
 export class User {
@@ -15,7 +15,7 @@ export class User {
   email: string | null = null
   phone: string | null = null
   profileURL: string | null = null
-  location: string | null = null
+  location: number | null = null
   constructor (user?: UserObject) {
     if (user) {
       this.messengerID = user.messenger_id
@@ -45,16 +45,20 @@ export class User {
       return true
     } else return false
   }
-  /*
-  async setLocation (value: Coordinates): Promise<boolean> {
-    if (value) {
-
+  async setLocation (value: Coordinates, title: string, url: string): Promise<boolean> {
+    if (await Location.isExists(this.location)) {
+      const existed = await Location.getForUser(this)
+      await existed.update(value)
+      return true
+    } else {
+      const created = await Location.create(value, title, url)
+      return !!created
     }
   }
-  */
-  setProfileURL (value: string): boolean {
+  async setProfileURL (value: string): Promise<boolean> {
     if (isURL(value)) {
       this.profileURL = value
+      await db.query(`UPDATE users SET profile_url = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.profileURL, this.messengerID])
       return true
     } else return false
   }
@@ -99,6 +103,9 @@ export class User {
   getFullName (): string {
     return `${this.firstName} ${this.lastName}`
   }
+  async getLocation (): Promise<Location> {
+    return Location.getForUser(this)
+  }
   async syncInformation (chat: Chat): Promise<UserObject> {
     const profile = await chat.getUserProfile()
     profile.messenger_id = profile.id
@@ -113,12 +120,16 @@ export class User {
   }
   async setContactInformation (chat: Chat): Promise<UserObject> {
     const conversation = await createConversation(chat)
-    const email = await askEmail(conversation)
-    conversation.set('email', email)
-    await this.setEmail(email)
-    const phone = await askPhoneNumber(conversation)
-    conversation.set('phone', phone)
-    await this.setPhone(phone)
+    if (!this.email) {
+      const email = await askEmail(conversation)
+      conversation.set('email', email)
+      await this.setEmail(email)
+    }
+    if (!this.phone) {
+      const phone = await askPhoneNumber(conversation)
+      conversation.set('phone', phone)
+      await this.setPhone(phone)
+    }
     await conversation.end()
     return this.getInformation()
   }

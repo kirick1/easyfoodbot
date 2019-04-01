@@ -51,14 +51,28 @@ export class Template {
     return Array.from(dishesMap.values()).map((dish: Dish) => Template.getDishGenericMessage(dish))
   }
   static getContactInformationGenericMessage (user: User): GenericTemplate {
+    let subtitle = ''
+    if (user.email) subtitle += `Email: ${user.email}\n`
+    if (user.phone) subtitle += `Phone: ${user.phone}\n`
+    if (!user.email && !user.phone) subtitle = 'Email and phone number not found!'
     return {
       title: user.getFullName(),
-      subtitle: `Email: ${user.email}\nPhone: ${user.phone}`,
+      subtitle: subtitle,
       buttons: [
         {
-          title: 'Update',
+          title: 'Update contact information',
           type: 'postback',
-          payload: `ACCOUNT_CONTACT_EDIT___${user.id}`
+          payload: 'ACCOUNT_UPDATE_CONTACT_INFORMATION'
+        },
+        {
+          title: 'Show default location',
+          type: 'postback',
+          payload: 'ACCOUNT_SHOW_DEFAULT_LOCATION'
+        },
+        {
+          title: 'Update default location',
+          type: 'postback',
+          payload: 'ACCOUNT_UPDATE_DEFAULT_LOCATION'
         }
       ]
     }
