@@ -1,8 +1,5 @@
 import db from '../database'
-import { Order, Template } from '.'
-import { isURL } from 'validator'
-import { UserObject, ProfileObject, LocationObject, Coordinates, Chat } from '../types'
-import { createConversation, askYesNo, askQuestion, askEmail, askPhoneNumber } from '../controllers'
+import { LocationObject, Coordinates } from '../types'
 
 export class Location {
   id: number | null = null
