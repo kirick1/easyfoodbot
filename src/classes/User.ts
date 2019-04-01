@@ -1,7 +1,7 @@
 import db from '../database'
 import { Order, Template } from '.'
 import { isEmail, isURL } from 'validator'
-import { UserObject, ProfileObject, Chat } from '../types'
+import { UserObject, ProfileObject, LocationObject, Coordinates, Chat } from '../types'
 import { createConversation, askYesNo, askQuestion, askEmail, askPhoneNumber } from '../controllers'
 
 export class User {
@@ -15,6 +15,7 @@ export class User {
   email: string | null = null
   phone: string | null = null
   profileURL: string | null = null
+  location: string | null = null
   constructor (user?: UserObject) {
     if (user) {
       this.messengerID = user.messenger_id
@@ -27,6 +28,7 @@ export class User {
       this.email = user.email
       this.phone = user.phone
       this.profileURL = user.profile_url
+      this.location = user.location
     }
   }
   async setEmail (value: string): Promise<boolean> {
@@ -43,6 +45,13 @@ export class User {
       return true
     } else return false
   }
+  /*
+  async setLocation (value: Coordinates): Promise<boolean> {
+    if (value) {
+
+    }
+  }
+  */
   setProfileURL (value: string): boolean {
     if (isURL(value)) {
       this.profileURL = value
@@ -69,6 +78,7 @@ export class User {
     this.email = user.email || this.email
     this.phone = user.phone || this.phone
     this.profileURL = user.profile_url || this.profileURL
+    this.location = user.location || this.location
     return this.getInformation()
   }
   getInformation (): UserObject {
@@ -82,7 +92,8 @@ export class User {
       id: this.id,
       email: this.email,
       phone: this.phone,
-      profile_url: this.profileURL
+      profile_url: this.profileURL,
+      location: this.location
     }
   }
   getFullName (): string {

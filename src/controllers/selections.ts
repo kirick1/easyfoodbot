@@ -1,6 +1,6 @@
 import { Dish, DishesSet } from '../classes'
 import { Conversation, Chat } from '../types'
-import { askQuestion, askYesNo, createConversation } from '.'
+import { askQuestion, askYesNo, createConversation, askLocation } from '.'
 
 enum KEY {
   SETS = '(Sets)',

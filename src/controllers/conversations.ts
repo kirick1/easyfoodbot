@@ -1,4 +1,4 @@
-import { MessagePayload, Chat, Conversation } from '../types'
+import { MessagePayload, LocationPayload, Chat, Conversation, Coordinates, CONTENT_TYPE } from '../types'
 
 export const createConversation = (chat: Chat): Promise<Conversation> => new Promise<Conversation>((resolve) => chat.conversation(resolve))
 export const askYesNo = (conversation: Conversation, text: string = 'Right?'): Promise<boolean> => new Promise<boolean>((resolve) => conversation.ask({ text, quickReplies: ['Yes', 'No'] }, (payload: MessagePayload) => resolve(payload.message.text === 'Yes')))
@@ -14,9 +14,18 @@ export const askQuestion = (conversation: Conversation, question: any, askConfir
       : await askQuestion(conversation, question, askConfirmation, validator))
   } else return resolve(await askQuestion(conversation, question, askConfirmation, validator))
 }))
-export const askEmail = (conversation: Conversation): Promise<string> => new Promise<string>((resolve) => conversation.ask({ text: 'Add email', quickReplies: [{
-  content_type: 'user_email'
-}] }, async (payload: MessagePayload) => resolve(payload.message.text)))
-export const askPhoneNumber = (conversation: Conversation): Promise<string> => new Promise<string>((resolve) => conversation.ask({ text: 'Add mobile phone', quickReplies: [{
-  content_type: 'user_phone_number'
-}] }, async (payload: MessagePayload) => resolve(payload.message.text)))
+
+export const askEmail = (conversation: Conversation): Promise<string> => new Promise<string>((resolve) => conversation.ask({
+  text: 'Add email',
+  quickReplies: [{ content_type: CONTENT_TYPE.EMAIL }]
+}, async (payload: MessagePayload) => resolve(payload.message.text)))
+
+export const askPhoneNumber = (conversation: Conversation): Promise<string> => new Promise<string>((resolve) => conversation.ask({
+  text: 'Add mobile phone',
+  quickReplies: [{ content_type: CONTENT_TYPE.PHONE_NUMBER }]
+}, async (payload: MessagePayload) => resolve(payload.message.text)))
+
+export const askLocation = (conversation: Conversation): Promise<Coordinates> => new Promise<Coordinates>((resolve) => conversation.ask({
+  text: 'Send location',
+  quickReplies: [{ content_type: CONTENT_TYPE.LOCATION }]
+}, async (payload: LocationPayload) => resolve(payload.message.attachments[0].payload.coordinates)))

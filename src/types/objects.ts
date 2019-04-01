@@ -14,6 +14,12 @@ export interface DishesSetObject {
   dishes?: Map<string, Dish>
 }
 
+export enum CONTENT_TYPE {
+  LOCATION = 'location',
+  PHONE_NUMBER = 'user_phone_number',
+  EMAIL = 'user_email'
+}
+
 export type Status = 'new' | 'progress' | 'done' | 'canceled'
 export type TypeOfRepetitions = 'immediate'
 
@@ -38,10 +44,35 @@ export interface UserObject {
   email: string | null
   phone: string | null
   profile_url: string | null
+  location: string | null
+}
+export interface LocationObject {
+  id: number | null
+  title: string | null
+  url: string | null
+  latitude: number | null
+  longitude: number | null
 }
 export interface MessagePayload {
   message: {
     text: string
+  }
+}
+export interface Coordinates {
+  lat: number
+  long: number
+}
+export interface Attachment {
+  title: string
+  url: string
+  type: CONTENT_TYPE.LOCATION
+  payload: {
+    coordinates: Coordinates
+  }
+}
+export interface LocationPayload {
+  message: {
+    attachments: Array<Attachment>
   }
 }
 export interface PostbackPayload {

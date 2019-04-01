@@ -33,11 +33,18 @@ export class Template {
       title: `${dish.title} (${dish.getTotalPriceString()})`,
       subtitle: dish.description,
       image_url: dish.photo,
-      buttons: [{
-        type: 'web_url',
-        url: dish.photo,
-        title: 'Photo'
-      }]
+      buttons: [
+        {
+          type: 'web_url',
+          url: dish.photo,
+          title: 'Photo'
+        },
+        {
+          type: 'web_url',
+          url: 'https://www.google.com',
+          title: 'More'
+        }
+      ]
     }
   }
   static getDishesMapGenericMessage (dishesMap: Map<string, Dish>): Array<GenericTemplate> {
@@ -47,11 +54,13 @@ export class Template {
     return {
       title: user.getFullName(),
       subtitle: `Email: ${user.email}\nPhone: ${user.phone}`,
-      buttons: [{
-        title: 'Edit',
-        type: 'postback',
-        payload: `ACCOUNT_CONTACT_EDIT___${user.id}`
-      }]
+      buttons: [
+        {
+          title: 'Update',
+          type: 'postback',
+          payload: `ACCOUNT_CONTACT_EDIT___${user.id}`
+        }
+      ]
     }
   }
 }
