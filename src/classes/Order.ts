@@ -1,7 +1,7 @@
 import db from '../database'
-import { Dish, User, Template } from '.'
-import { SelectDishesForOrder } from '../controllers'
+import { Dish, User, Template, Location } from '.'
 import { OrderObject, Chat, Status, TypeOfRepetitions } from '../types'
+import { SelectDishesForOrder, createConversation, askLocation } from '../controllers'
 
 export class Order {
   id: number | null
@@ -65,20 +65,25 @@ export class Order {
     await order.getDishes()
     return order
   }
-  static async create (dishes: Map<string, Dish>, user: User, notify: boolean = true): Promise<Order> {
+  static async create (dishes: Map<string, Dish>, user: User, location: Location, notify: boolean = true): Promise<Order> {
     const totalPrice = Dish.getDishesMapTotalPrice(dishes)
-    const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice])
+    const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price, location) VALUES ($1, $2, $3) RETURNING *', [user.id, totalPrice, location.id])
     for (const dish of dishes.values()) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1])
     const order = new Order(orderData)
     if (notify) await db.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`)
     return order
   }
   static async makeImmediateOrder (chat: Chat, user: User): Promise<Order> {
+    const conversation = await createConversation(chat)
     try {
-      const dishes = await SelectDishesForOrder(chat)
-      return await Order.create(dishes, user)
+      const dishes = await SelectDishesForOrder(conversation)
+      const locationData = await askLocation(conversation)
+      const location = await Location.create(locationData.payload.coordinates, locationData.title, locationData.url)
+      await conversation.end()
+      return await Order.create(dishes, user, location)
     } catch (error) {
       console.error('[BOT] [ORDER] ERROR MAKING IMMEDIATE ORDER: ', error)
+      await conversation.end()
       throw Error(error)
     }
   }

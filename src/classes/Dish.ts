@@ -1,5 +1,5 @@
+import { Template } from '.'
 import { DishObject, Chat, Conversation, Element } from '../types'
-import { Template } from './Template'
 
 export class Dish {
   id: number

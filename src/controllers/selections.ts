@@ -76,8 +76,7 @@ const selectDishesFromDishesSet = async (conversation: Conversation, dishesSets:
     }
   }
 }
-export const SelectDishesForOrder = async (chat: Chat): Promise<Map<string, Dish>> => {
-  const conversation = await createConversation(chat)
+export const SelectDishesForOrder = async (conversation: Conversation): Promise<Map<string, Dish>> => {
   conversation.set(KEY.SELECTED_DISHES, new Map<string, Dish>())
   const dishesSets: Map<string, DishesSet> = await DishesSet.getAllDishesSets()
   if (dishesSets.size === 0) {
@@ -88,12 +87,11 @@ export const SelectDishesForOrder = async (chat: Chat): Promise<Map<string, Dish
   try {
     const selectedDishes = await selectDishesFromDishesSet(conversation, dishesSets, new Map<string, Dish>(), 'Select the desired number of products')
     if (selectedDishes && selectedDishes.size > 0) return selectedDishes
-    else return SelectDishesForOrder(chat)
+    else return SelectDishesForOrder(conversation)
   } catch (error) {
     console.error('[BOT] [SELECTION] SELECTING DISHES FOR ORDER ERROR: ', error)
     if (typeof error === 'string') await conversation.say(error)
     else await conversation.say('Something went wrong, please try again later!')
-    await conversation.end()
     return new Map<string, Dish>()
   }
 }

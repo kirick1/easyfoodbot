@@ -1,4 +1,4 @@
-import { MessagePayload, LocationPayload, Chat, Conversation, Coordinates, CONTENT_TYPE } from '../types'
+import { MessagePayload, LocationPayload, Chat, Conversation, Coordinates, Attachment, CONTENT_TYPE } from '../types'
 
 export const createConversation = (chat: Chat): Promise<Conversation> => new Promise<Conversation>((resolve) => chat.conversation(resolve))
 export const askYesNo = (conversation: Conversation, text: string = 'Right?'): Promise<boolean> => new Promise<boolean>((resolve) => conversation.ask({ text, quickReplies: ['Yes', 'No'] }, (payload: MessagePayload) => resolve(payload.message.text === 'Yes')))
@@ -25,7 +25,7 @@ export const askPhoneNumber = (conversation: Conversation): Promise<string> => n
   quickReplies: [{ content_type: CONTENT_TYPE.PHONE_NUMBER }]
 }, async (payload: MessagePayload) => resolve(payload.message.text)))
 
-export const askLocation = (conversation: Conversation): Promise<Coordinates> => new Promise<Coordinates>((resolve) => conversation.ask({
+export const askLocation = (conversation: Conversation): Promise<Attachment> => new Promise<Attachment>((resolve) => conversation.ask({
   text: 'Send location',
   quickReplies: [{ content_type: CONTENT_TYPE.LOCATION }]
-}, async (payload: LocationPayload) => resolve(payload.message.attachments[0].payload.coordinates)))
+}, async (payload: LocationPayload) => resolve(payload.message.attachments[0])))
