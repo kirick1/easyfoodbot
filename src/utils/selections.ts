@@ -1,6 +1,6 @@
+import { Conversation } from '../types'
+import { askQuestion, askYesNo } from '.'
 import { Dish, DishesSet } from '../classes'
-import { Conversation, Chat } from '../types'
-import { askQuestion, askYesNo, createConversation } from '.'
 
 enum KEY {
   SETS = '(Sets)',
@@ -15,7 +15,10 @@ const selectDishesSet = async (conversation: Conversation, dishesSets: Map<strin
     await conversation.end()
     throw Error('There are no sets yet!')
   }
-  const selectedDishesSetTitle = await askQuestion(conversation, { text: 'Available dishes sets:', quickReplies: Array.from(dishesSets.keys()) })
+  const selectedDishesSetTitle = await askQuestion(conversation, {
+    text: 'Available dishes sets:',
+    quickReplies: Array.from(dishesSets.keys())
+  })
   const selectedDishesSet = dishesSets.get(selectedDishesSetTitle)
   if (!selectedDishesSet || !selectedDishesSet.dishes || selectedDishesSet.dishes.size === 0) {
     await conversation.say('There are no dishes in selected set!')
@@ -36,7 +39,10 @@ const selectDishesFromDishesSet = async (conversation: Conversation, dishesSets:
     return selectDishesFromDishesSet(conversation, dishesSets, dishesMap, text)
   }
   if (text === null && selectedDishes.size > 0) text = Dish.getSelectedDishesPriceListString(selectedDishes)
-  const answer = await askQuestion(conversation, { text, quickReplies: [...dishesMap.keys(), KEY.SETS, KEY.SUBMIT, KEY.CANCEL] })
+  const answer = await askQuestion(conversation, {
+    text: text,
+    quickReplies: [...dishesMap.keys(), KEY.SETS, KEY.SUBMIT, KEY.CANCEL]
+  })
   switch (answer) {
     case KEY.SETS: {
       return selectDishesFromDishesSet(conversation, dishesSets)

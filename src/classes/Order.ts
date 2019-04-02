@@ -1,7 +1,7 @@
 import db from '../database'
 import { Dish, User, Template, Location } from '.'
 import { OrderObject, Chat, Status, TypeOfRepetitions } from '../types'
-import { SelectDishesForOrder, createConversation, askLocation } from '../controllers'
+import { SelectDishesForOrder, createConversation, askLocation } from '../utils'
 
 export class Order {
   id: number | null

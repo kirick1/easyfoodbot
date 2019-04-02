@@ -2,7 +2,7 @@ import db from '../database'
 import { isEmail, isURL } from 'validator'
 import { Order, Template, Location } from '.'
 import { UserObject, ProfileObject, Coordinates, Chat } from '../types'
-import { createConversation, askYesNo, askQuestion, askEmail, askPhoneNumber } from '../controllers'
+import { createConversation, askYesNo, askQuestion, askEmail, askPhoneNumber } from '../utils'
 
 export class User {
   messengerID: number | null = null

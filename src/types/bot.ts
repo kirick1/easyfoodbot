@@ -1,12 +1,14 @@
 import { MessagePayload, PostbackPayload } from './objects'
 
-export interface Bot {
+export interface BotOptions {
   accessToken: string
   verifyToken: string
   appSecret: string
-  webhook: string | '/webhook'
-  broadcastEchoes: boolean | false
-  graphApiVersion: string | 'v2.12'
+  webhook: string
+  broadcastEchoes: boolean
+  graphApiVersion: string
+}
+export interface Bot {
   start (port?: number | 3000): void
   close (): Promise<any>
   on (event: string, handler: Function): void

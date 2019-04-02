@@ -1,4 +1,4 @@
-import { MessagePayload, LocationPayload, Chat, Conversation, Coordinates, Attachment, CONTENT_TYPE } from '../types'
+import { MessagePayload, LocationPayload, Chat, Conversation, Attachment, CONTENT_TYPE } from '../types'
 
 export const createConversation = (chat: Chat): Promise<Conversation> => new Promise<Conversation>((resolve) => chat.conversation(resolve))
 export const askYesNo = (conversation: Conversation, text: string = 'Right?'): Promise<boolean> => new Promise<boolean>((resolve) => conversation.ask({ text, quickReplies: ['Yes', 'No'] }, (payload: MessagePayload) => resolve(payload.message.text === 'Yes')))
