@@ -1,8 +1,7 @@
 import db from '../../database'
 import { IChat } from '../../types'
-import { Dish, User, Template, Location } from '..'
 import { SelectDishesForOrder } from './selection'
-import { createConversation, askLocation } from '../../utils'
+import { Dish, User, Template, Location, Conversation } from '..'
 
 export type Status = 'new' | 'progress' | 'done' | 'canceled'
 
@@ -91,10 +90,10 @@ export class Order {
     return order
   }
   static async makeImmediateOrder (chat: IChat, user: User): Promise<Order> {
-    const conversation = await createConversation(chat)
+    const conversation = await Conversation.createConversation(chat)
     try {
       const dishes = await SelectDishesForOrder(conversation)
-      const locationData = await askLocation(conversation)
+      const locationData = await Conversation.askLocation(conversation)
       const location = await Location.create(locationData.payload.coordinates, locationData.title, locationData.url)
       await conversation.end()
       return await Order.create(dishes, user, location)
