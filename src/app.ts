@@ -3,8 +3,8 @@ import { config } from 'dotenv'
 
 config({ path: join(__dirname, '..', '.env') })
 
-import { Bot, BotOptions } from './types'
-import { PostbackEventHandler } from './handlers'
+import { IBot, BotOptions } from './types'
+import { PostbackEventHandler } from './controllers'
 import { GreetingText, PersistentMenu } from './settings'
 
 const BootBot = require('bootbot')
@@ -18,7 +18,7 @@ const botOptions: BotOptions = {
   broadcastEchoes: false
 }
 
-const bot: Bot = new BootBot(botOptions)
+const bot: IBot = new BootBot(botOptions)
 
 bot.setGreetingText(GreetingText)
 bot.setPersistentMenu(PersistentMenu)

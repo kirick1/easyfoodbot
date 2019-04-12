@@ -1,9 +1,9 @@
 import { User } from '../classes'
-import { Chat, PostbackPayload } from '../types'
+import { IChat, PostbackPayload } from '../types'
 import { OrderEventsHandler } from './orders'
 import { AccountEventsHandler } from './account'
 
-export const PostbackEventHandler = async (payload: PostbackPayload, chat: Chat): Promise<any> => {
+export const PostbackEventHandler = async (payload: PostbackPayload, chat: IChat): Promise<any> => {
   try {
     const user = new User()
     await user.syncInformation(chat)

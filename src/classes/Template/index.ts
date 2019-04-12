@@ -1,5 +1,6 @@
-import { Order, Dish, User } from '.'
-import { ReceiptTemplate, GenericTemplate } from '../types'
+import { Order, Dish, User } from '..'
+import { GenericTemplate } from './generic'
+import { ReceiptTemplate } from './receipt'
 
 export class Template {
   static async getOrderReceiptMessage (order: Order, user: User): Promise<ReceiptTemplate> {
@@ -78,3 +79,5 @@ export class Template {
     }
   }
 }
+
+export { Element } from './receipt'

@@ -1,21 +1,30 @@
-import { Template } from '.'
-import { DishObject, Chat, Conversation, Element } from '../types'
+import { Template, Element } from '..'
+import { IChat, IConversation } from '../../types'
 
-export class Dish {
+export interface IDish {
+  id: number
+  title: string
+  description: string
+  photo: string
+  price: number
+  numberInOrder?: number
+}
+
+export class Dish implements IDish {
   id: number
   title: string
   description: string
   photo: string
   price: number = 0.0
   numberInOrder: number = 0
-  constructor (dish: DishObject, numberInOrder: number | null = null) {
+  constructor (dish: IDish, numberInOrder: number = 0) {
     this.id = dish.id
     this.title = dish.title
     this.description = dish.description
     this.photo = dish.photo
     this.price = dish.price || 0.0
     this.numberInOrder = dish.numberInOrder || 0
-    if (numberInOrder !== null) this.numberInOrder = numberInOrder || this.numberInOrder
+    if (numberInOrder > 0) this.numberInOrder = numberInOrder
   }
   isInOrder (): boolean {
     return this.numberInOrder > 0 && this.getTotalPrice() > 0.0
@@ -26,8 +35,8 @@ export class Dish {
   getTotalPrice (): number {
     return this.numberInOrder > 0 ? this.price * this.numberInOrder : this.price
   }
-  getTotalPriceString (currency: string = '€'): string {
-    return `${this.getTotalPrice().toFixed(2)}${currency}`
+  getTotalPriceString (): string {
+    return `${this.getTotalPrice().toFixed(2)}€`
   }
   getPriceListString (): string {
     return this.isInOrder()
@@ -57,7 +66,7 @@ export class Dish {
   static getDishesMapTotalPriceString (dishesMap: Map<string, Dish>, currency: string = '€'): string {
     return `${Dish.getDishesMapTotalPrice(dishesMap).toFixed(2)}${currency}`
   }
-  static async showDishesMapInformation (conversation: Conversation | Chat, dishesMap: Map<string, Dish>): Promise<any> {
+  static async showDishesMapInformation (conversation: IConversation | IChat, dishesMap: Map<string, Dish>): Promise<any> {
     return dishesMap.size > 0
       ? conversation.sendGenericTemplate(Template.getDishesMapGenericMessage(dishesMap))
       : conversation.say('No dishes!')

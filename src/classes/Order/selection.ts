@@ -1,21 +1,22 @@
-import { Conversation } from '../types'
-import { askQuestion, askYesNo } from '.'
-import { Dish, DishesSet } from '../classes'
+import { IConversation } from '../../types'
+import { Dish } from './Dish'
+import { DishesSet } from './DishesSet'
+import { Conversation } from '..'
 
-enum KEY {
+enum SELECTION_DEFAULT_KEYS {
   SETS = '(Sets)',
   SUBMIT = '(Submit)',
   CANCEL = '(Cancel)',
   SELECTED_DISHES = 'SelectedDishes'
 }
 
-const selectDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet>): Promise<Map<string, Dish>> => {
+const selectDishesSet = async (conversation: IConversation, dishesSets: Map<string, DishesSet>): Promise<Map<string, Dish>> => {
   if (dishesSets.size === 0) {
     await conversation.say('There are no sets yet!')
     await conversation.end()
     throw Error('There are no sets yet!')
   }
-  const selectedDishesSetTitle = await askQuestion(conversation, {
+  const selectedDishesSetTitle = await Conversation.askQuestion(conversation, {
     text: 'Available dishes sets:',
     quickReplies: Array.from(dishesSets.keys())
   })
@@ -28,29 +29,29 @@ const selectDishesSet = async (conversation: Conversation, dishesSets: Map<strin
     return selectedDishesSet.dishes
   }
 }
-const selectDishesFromDishesSet = async (conversation: Conversation, dishesSets: Map<string, DishesSet>, dishesMap: Map<string, Dish> = new Map<string, Dish>(), text: string | null = null): Promise<Map<string, Dish>> => {
+const selectDishesFromDishesSet = async (conversation: IConversation, dishesSets: Map<string, DishesSet>, dishesMap: Map<string, Dish> = new Map<string, Dish>(), text: string | null = null): Promise<Map<string, Dish>> => {
   if (dishesMap.size === 0) {
     const dishesSetDishes = await selectDishesSet(conversation, dishesSets)
     return selectDishesFromDishesSet(conversation, dishesSets, dishesSetDishes, text)
   }
-  const selectedDishes: Map<string, Dish> = conversation.get(KEY.SELECTED_DISHES)
+  const selectedDishes: Map<string, Dish> = conversation.get(SELECTION_DEFAULT_KEYS.SELECTED_DISHES)
   if (selectedDishes === undefined || selectedDishes === null || !(selectedDishes instanceof Map)) {
     await conversation.say('Selected dishes not found, please try again!')
     return selectDishesFromDishesSet(conversation, dishesSets, dishesMap, text)
   }
   if (text === null && selectedDishes.size > 0) text = Dish.getSelectedDishesPriceListString(selectedDishes)
-  const answer = await askQuestion(conversation, {
+  const answer = await Conversation.askQuestion(conversation, {
     text: text,
-    quickReplies: [...dishesMap.keys(), KEY.SETS, KEY.SUBMIT, KEY.CANCEL]
+    quickReplies: [...dishesMap.keys(), SELECTION_DEFAULT_KEYS.SETS, SELECTION_DEFAULT_KEYS.SUBMIT, SELECTION_DEFAULT_KEYS.CANCEL]
   })
   switch (answer) {
-    case KEY.SETS: {
+    case SELECTION_DEFAULT_KEYS.SETS: {
       return selectDishesFromDishesSet(conversation, dishesSets)
     }
-    case KEY.SUBMIT: {
-      const selectedDishes: Map<string, Dish> = conversation.get(KEY.SELECTED_DISHES)
+    case SELECTION_DEFAULT_KEYS.SUBMIT: {
+      const selectedDishes: Map<string, Dish> = conversation.get(SELECTION_DEFAULT_KEYS.SELECTED_DISHES)
       if (selectedDishes.size > 0) {
-        const submit = await askYesNo(conversation, `Total price is ${Dish.getDishesMapTotalPriceString(selectedDishes)}, make order?`)
+        const submit = await Conversation.askYesNo(conversation, `Total price is ${Dish.getDishesMapTotalPriceString(selectedDishes)}, make order?`)
         if (!submit) return selectDishesFromDishesSet(conversation, dishesSets)
         await conversation.end()
         return selectedDishes
@@ -59,8 +60,8 @@ const selectDishesFromDishesSet = async (conversation: Conversation, dishesSets:
         return selectDishesFromDishesSet(conversation, dishesSets)
       }
     }
-    case KEY.CANCEL: {
-      if (await askYesNo(conversation, `Are you really want to cancel this order?`)) {
+    case SELECTION_DEFAULT_KEYS.CANCEL: {
+      if (await Conversation.askYesNo(conversation, `Are you really want to cancel this order?`)) {
         await conversation.say('Order was canceled!')
         await conversation.end()
         throw Error('Order was canceled!')
@@ -77,13 +78,13 @@ const selectDishesFromDishesSet = async (conversation: Conversation, dishesSets:
         dish.numberInOrder = 1
         selectedDishes.set(dish.getTitle(), dish)
       }
-      conversation.set(KEY.SELECTED_DISHES, selectedDishes)
+      conversation.set(SELECTION_DEFAULT_KEYS.SELECTED_DISHES, selectedDishes)
       return selectDishesFromDishesSet(conversation, dishesSets, dishesMap)
     }
   }
 }
-export const SelectDishesForOrder = async (conversation: Conversation): Promise<Map<string, Dish>> => {
-  conversation.set(KEY.SELECTED_DISHES, new Map<string, Dish>())
+export const SelectDishesForOrder = async (conversation: IConversation): Promise<Map<string, Dish>> => {
+  conversation.set(SELECTION_DEFAULT_KEYS.SELECTED_DISHES, new Map<string, Dish>())
   const dishesSets: Map<string, DishesSet> = await DishesSet.getAllDishesSets()
   if (dishesSets.size === 0) {
     await conversation.say('There are no food sets yet!')

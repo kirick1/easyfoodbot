@@ -1,14 +1,14 @@
-import { MessagePayload, PostbackPayload } from './objects'
+import { MessagePayload, PostbackPayload } from './payload'
 
 export interface BotOptions {
   accessToken: string
   verifyToken: string
   appSecret: string
-  webhook: string
+  webhook: string | '/webhook'
   broadcastEchoes: boolean
   graphApiVersion: string
 }
-export interface Bot {
+export interface IBot {
   start (port?: number | 3000): void
   close (): Promise<any>
   on (event: string, handler: Function): void
@@ -32,7 +32,7 @@ export interface Bot {
   deletePersistentMenu (): void
   say (recipientId: Recipient | string, message: string | Message | Array<any>, options?: SendMessageOptions): Promise<void>
   hear (keywords: string | RegExp | Array<any>, callback: Function): any
-  module (factory: Function): any
+  module (factory: Function): void
   conversation (recipientId: Recipient | string, factory: Function): any
   handleFacebookData (data: object | any): any
 }
@@ -56,8 +56,8 @@ export interface SendMessageOptions {
   messagingType?: string | 'RESPONSE'
   notificationType?: string
   tag?: string
-  onDelivery?: (payload: MessagePayload | PostbackPayload, chat: Chat, data?: any) => void
-  onRead?: (payload: MessagePayload | PostbackPayload, chat: Chat, data?: any) => void
+  onDelivery?: (payload: MessagePayload | PostbackPayload, chat: IChat, data?: any) => void
+  onRead?: (payload: MessagePayload | PostbackPayload, chat: IChat, data?: any) => void
 }
 export interface Message {
   text: string
@@ -81,8 +81,8 @@ export interface ProfileObject {
   gender: string
   messenger_id?: number
 }
-export interface Chat {
-  bot: Bot
+export interface IChat {
+  bot: IBot
   userId: string
   say (message: Message | string | object | Array<any>, options?: SendMessageOptions): Promise<void>
   sendTextMessage (text: string, quickReplies: Array<QuickReply | string>, options?: SendMessageOptions): Promise<void>
@@ -98,8 +98,8 @@ export interface Chat {
   getUserProfile (): Promise<ProfileObject>
   conversation (factory: Function): void
 }
-export interface Conversation extends Chat {
-  bot: Bot
+export interface IConversation extends IChat {
+  bot: IBot
   userId: string
   ask (question: string | object | Array<any>, answer: Function, callbacks?: Array<Function>, options?: SendMessageOptions): Promise<void>
   respond (payload: object, data: object): Promise<void>

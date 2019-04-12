@@ -1,20 +1,3 @@
-export interface PostbackButton {
-  type: string
-  title: string
-  url?: string
-  payload?: string
-}
-export interface GenericTemplate {
-  title: string
-  subtitle?: string
-  image_url?: string
-  default_action?: {
-    type: string
-    title: string
-    url: string
-  }
-  buttons: Array<PostbackButton>
-}
 export interface Element {
   title: string
   subtitle?: string
@@ -23,6 +6,7 @@ export interface Element {
   currency?: string
   image_url?: string
 }
+
 export interface Address {
   street_1: string
   street_2?: string
@@ -31,12 +15,14 @@ export interface Address {
   state: string
   country: string
 }
+
 export interface Summary {
   subtotal?: number
   shipping_cost?: number
   total_tax?: number
   total_cost: number
 }
+
 export interface ReceiptTemplate {
   template_type: string
   recipient_name: string

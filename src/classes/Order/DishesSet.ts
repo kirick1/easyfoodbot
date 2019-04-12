@@ -1,15 +1,20 @@
-import db from '../database'
-import { Dish } from '.'
-import { DishesSetObject } from '../types'
+import db from '../../database'
+import { Dish } from '../index'
 
-export class DishesSet {
+export interface IDishesSet {
+  id: number
+  title: string
+  dishes?: Map<string, Dish>
+}
+
+export class DishesSet implements IDishesSet {
   id: number
   title: string
   dishes: Map<string, Dish> = new Map<string, Dish>()
-  constructor (dishesSet: DishesSetObject, dishes?: Map<string, Dish>) {
+  constructor (dishesSet: IDishesSet, dishes?: Map<string, Dish>) {
     this.id = dishesSet.id
     this.title = dishesSet.title
-    this.dishes = dishesSet.dishes && dishesSet.dishes.size > 0 ? dishesSet.dishes : new Map<string, Dish>()
+    this.dishes = dishesSet.dishes || new Map<string, Dish>()
     if (dishes && dishes.size > 0) this.dishes = dishes
   }
   getTitle (maxLength: number = 20): string {

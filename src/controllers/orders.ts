@@ -1,7 +1,7 @@
-import { Chat } from '../types'
+import { IChat } from '../types'
 import { User, Order } from '../classes'
 
-export const OrderEventsHandler = async (chat: Chat, command: string, user: User): Promise<void> => {
+export const OrderEventsHandler = async (chat: IChat, command: string, user: User): Promise<void> => {
   switch (command) {
     case 'ORDERS_MAKE_ORDER_NOW': {
       const order = await Order.makeImmediateOrder(chat, user)

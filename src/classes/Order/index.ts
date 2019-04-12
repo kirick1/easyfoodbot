@@ -1,7 +1,24 @@
-import db from '../database'
-import { Dish, User, Template, Location } from '.'
-import { OrderObject, Chat, Status, TypeOfRepetitions } from '../types'
-import { SelectDishesForOrder, createConversation, askLocation } from '../utils'
+import db from '../../database'
+import { IChat } from '../../types'
+import { Dish, User, Template, Location } from '..'
+import { SelectDishesForOrder } from './selection'
+import { createConversation, askLocation } from '../../utils'
+
+export type Status = 'new' | 'progress' | 'done' | 'canceled'
+
+export type TypeOfRepetitions = 'immediate'
+
+export interface IOrder {
+  id: number | null
+  user_id: number | null
+  total_price: number | null
+  number_of_repetitions: number | null
+  type_of_repetitions: TypeOfRepetitions
+  status: Status
+  is_completed: boolean
+  dishes?: Map<string, Dish> | null
+  location: number | null
+}
 
 export class Order {
   id: number | null
@@ -13,7 +30,7 @@ export class Order {
   isCompleted: boolean = false
   dishes: Map<string, Dish> = new Map<string, Dish>()
   location: number | null = null
-  constructor (order: OrderObject) {
+  constructor (order: IOrder) {
     this.id = order.id
     this.userID = order.user_id
     this.totalPrice = order.total_price || 0.0
@@ -27,7 +44,7 @@ export class Order {
   getTotalPrice (): number {
     return Dish.getDishesMapTotalPrice(this.dishes)
   }
-  getInformation (): OrderObject {
+  getInformation (): IOrder {
     return {
       id: this.id,
       user_id: this.userID,
@@ -54,7 +71,7 @@ export class Order {
     const dishes = await this.getDishes()
     return Array.from(dishes.values())
   }
-  async showReceipt (chat: Chat, user: User): Promise<void> {
+  async showReceipt (chat: IChat, user: User): Promise<void> {
     return this.status === 'new'
       ? chat.sendTemplate(await Template.getOrderReceiptMessage(this, user))
       : chat.sendGenericTemplate([await Template.getOrderGenericMessage(this)])
@@ -73,7 +90,7 @@ export class Order {
     if (notify) await db.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`)
     return order
   }
-  static async makeImmediateOrder (chat: Chat, user: User): Promise<Order> {
+  static async makeImmediateOrder (chat: IChat, user: User): Promise<Order> {
     const conversation = await createConversation(chat)
     try {
       const dishes = await SelectDishesForOrder(conversation)
@@ -87,7 +104,7 @@ export class Order {
       throw Error(error)
     }
   }
-  static async toArray (orders: Array<OrderObject>): Promise<Array<Order>> {
+  static async toArray (orders: Array<IOrder>): Promise<Array<Order>> {
     const result = []
     for (const orderData of orders) {
       const order = new Order(orderData)
@@ -97,3 +114,6 @@ export class Order {
     return result
   }
 }
+
+export { Dish, IDish } from './Dish'
+export { DishesSet, IDishesSet } from './DishesSet'

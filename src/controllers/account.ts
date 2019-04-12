@@ -1,7 +1,7 @@
-import { Chat } from '../types'
+import { IChat } from '../types'
 import { User } from '../classes'
 
-export const AccountEventsHandler = async (chat: Chat, command: string, user: User): Promise<void> => {
+export const AccountEventsHandler = async (chat: IChat, command: string, user: User): Promise<void> => {
   switch (command) {
     case 'ACCOUNT_SHOW_CONTACT_INFORMATION': {
       await user.showContactInformation(chat)
