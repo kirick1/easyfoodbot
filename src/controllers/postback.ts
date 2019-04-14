@@ -6,6 +6,7 @@ export const PostbackEventHandler = async (payload: PostbackPayload, chat: IChat
     const user = new User()
     await user.syncInformation(chat)
     const command = payload.postback.payload
+    console.log('COMMAND: ', command)
     switch (command) {
       case 'BOOTBOT_GET_STARTED': {
         return chat.say(`Hello, ${user.firstName} ${user.lastName}!`)
@@ -60,8 +61,7 @@ export const PostbackEventHandler = async (payload: PostbackPayload, chat: IChat
                   }
                   default: {
                     console.warn('[BOT] [POSTBACK] UNKNOWN COMMAND: ', command)
-                    await chat.say('Unknown command, please try again!')
-                    break
+                    return await chat.say('Unknown command, please try again!')
                   }
                 }
               }
@@ -81,14 +81,12 @@ export const PostbackEventHandler = async (payload: PostbackPayload, chat: IChat
                 break
               }
               case 'ACCOUNT_SHOW_DEFAULT_LOCATION': {
-                await user.showDefaultLocation(chat)
-                break
+                return await user.showDefaultLocation(chat)
               }
               case 'ACCOUNT_UPDATE_DEFAULT_LOCATION': {
                 await user.setDefaultLocation(chat)
                 await chat.say('Account default location was successfully saved!')
-                await user.showDefaultLocation(chat)
-                break
+                return await user.showDefaultLocation(chat)
               }
               default: {
                 console.warn('[BOT] [EVENTS] UNKNOWN COMMAND: ', command)
