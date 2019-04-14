@@ -1,6 +1,6 @@
 import db from '../database'
 import { isEmail, isURL } from 'validator'
-import { ProfileObject, IChat, Attachment } from '../types'
+import { ProfileObject, IChat } from '../types'
 import { Order, Template, Location, Conversation } from '.'
 
 export interface IUser {
@@ -113,8 +113,8 @@ export class User {
   getFullName (): string {
     return `${this.firstName} ${this.lastName}`
   }
-  async getLocation (): Promise<Location> {
-    return Location.getForUser(this)
+  async getDefaultLocation (): Promise<Location> {
+    return Location.getByID(this.location)
   }
   async syncInformation (chat: IChat): Promise<IUser> {
     const profile = await chat.getUserProfile()
@@ -129,33 +129,24 @@ export class User {
     return this.getInformation()
   }
   async setDefaultLocation (chat: IChat): Promise<IUser> {
-    const conversation = await Conversation.createConversation(chat)
-    const attachment = await Conversation.askLocation(conversation)
-    const location = await Location.createFromAttachment(attachment)
-    conversation.set('location', location)
+    const location = await Conversation.askLocation(chat)
     await this.setLocation(location)
-    await conversation.end()
     return this.getInformation()
   }
   async showDefaultLocation (chat: IChat): Promise<any> {
-    const location = this.location ? await this.getLocation() : null
-    return location
-      ? chat.sendButtonTemplate('Account default location', [{
-        type: 'web_url',
-        url: location.url,
-        title: location.title
-      }])
-      : chat.say('Default location for your account not found!')
+    if (!this.location) return chat.say('Default location for your account not found!')
+    const location = await this.getDefaultLocation()
+    return chat.sendButtonTemplate('Account default location', [{
+      type: 'web_url',
+      url: location.url,
+      title: location.title
+    }])
   }
   async setContactInformation (chat: IChat): Promise<IUser> {
-    const conversation = await Conversation.createConversation(chat)
-    const email = await Conversation.askEmail(conversation)
-    conversation.set('email', email)
+    const email = await Conversation.askEmail(chat)
     await this.setEmail(email)
-    const phone = await Conversation.askPhoneNumber(conversation)
-    conversation.set('phone', phone)
+    const phone = await Conversation.askPhoneNumber(chat)
     await this.setPhone(phone)
-    await conversation.end()
     return this.getInformation()
   }
   async showContactInformation (chat: IChat): Promise<any> {

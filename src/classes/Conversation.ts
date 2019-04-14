@@ -1,4 +1,5 @@
-import { MessagePayload, LocationPayload, IChat, IConversation, Attachment, CONTENT_TYPE } from '../types'
+import { Location } from '../classes'
+import { MessagePayload, LocationPayload, IChat, IConversation, CONTENT_TYPE } from '../types'
 
 export const defaultTextValidator = (text: string, minLength: number = 0, maxLength: number = 8000): boolean => text.length >= minLength && text.length <= maxLength
 
@@ -23,22 +24,32 @@ export class Conversation {
       } else return resolve(await Conversation.askQuestion(conversation, question, askConfirmation, validator))
     }))
   }
-  static askEmail (conversation: IConversation): Promise<string> {
-    return new Promise<string>((resolve) => conversation.ask({
-      text: 'Add email',
-      quickReplies: [{ content_type: CONTENT_TYPE.EMAIL }]
-    }, async (payload: MessagePayload) => resolve(payload.message.text)))
+  static askEmail (chat: IChat, text: string = 'Add email'): Promise<string> {
+    return new Promise<string>((resolve) => chat.conversation((conversation: IConversation) => conversation.ask({
+      text, quickReplies: [{ content_type: CONTENT_TYPE.EMAIL }]
+    }, async (payload: MessagePayload, conversation: IConversation) => {
+      const value = payload.message.text
+      await conversation.end()
+      return resolve(value)
+    })))
   }
-  static askPhoneNumber (conversation: IConversation): Promise<string> {
-    return new Promise<string>((resolve) => conversation.ask({
-      text: 'Add mobile phone',
-      quickReplies: [{ content_type: CONTENT_TYPE.PHONE_NUMBER }]
-    }, async (payload: MessagePayload) => resolve(payload.message.text)))
+  static askPhoneNumber (chat: IChat, text: string = 'Add mobile phone'): Promise<string> {
+    return new Promise<string>((resolve) => chat.conversation((conversation: IConversation) => conversation.ask({
+      text, quickReplies: [{ content_type: CONTENT_TYPE.PHONE_NUMBER }]
+    }, async (payload: MessagePayload, conversation: IConversation) => {
+      const value = payload.message.text
+      await conversation.end()
+      return resolve(value)
+    })))
   }
-  static askLocation (conversation: IConversation): Promise<Attachment> {
-    return new Promise<Attachment>((resolve) => conversation.ask({
-      text: 'Send location',
-      quickReplies: [{ content_type: CONTENT_TYPE.LOCATION }]
-    }, async (payload: LocationPayload) => resolve(payload.message.attachments[0])))
+  static askLocation (chat: IChat, text: string = 'Add location'): Promise<Location> {
+    return new Promise<Location>((resolve) => chat.conversation((conversation: IConversation) => conversation.ask({
+      text, quickReplies: [{ content_type: CONTENT_TYPE.LOCATION }]
+    }, async (payload: LocationPayload, conversation: IConversation) => {
+      const attachment = payload.message.attachments[0]
+      await conversation.end()
+      const location = await Location.createFromAttachment(attachment)
+      return resolve(location)
+    })))
   }
 }

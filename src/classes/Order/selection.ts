@@ -1,4 +1,4 @@
-import { IConversation } from '../../types'
+import { IChat, IConversation } from '../../types'
 import { Dish } from './Dish'
 import { DishesSet } from './DishesSet'
 import { Conversation } from '..'
@@ -85,22 +85,22 @@ const selectDishesFromDishesSet = async (conversation: IConversation, dishesSets
   }
 }
 
-export const SelectDishesForOrder = async (conversation: IConversation): Promise<Map<string, Dish>> => {
-  conversation.set(SELECTION_DEFAULT_KEYS.SELECTED_DISHES, new Map<string, Dish>())
+export const SelectDishesForOrder = async (chat: IChat): Promise<Map<string, Dish>> => {
   const dishesSets: Map<string, DishesSet> = await DishesSet.getAllDishesSets()
-  if (dishesSets.size === 0) {
-    await conversation.say('There are no food sets yet!')
-    await conversation.end()
-    return new Map<string, Dish>()
-  }
+  if (dishesSets.size === 0) throw Error('There are no dishes sets yet!')
+  const conversation = await Conversation.createConversation(chat)
+  conversation.set(SELECTION_DEFAULT_KEYS.SELECTED_DISHES, new Map<string, Dish>())
   try {
     const selectedDishes = await selectDishesFromDishesSet(conversation, dishesSets, new Map<string, Dish>(), 'Select the desired number of products')
-    if (selectedDishes && selectedDishes.size > 0) return selectedDishes
-    else return SelectDishesForOrder(conversation)
+    if (selectedDishes && selectedDishes.size > 0) {
+      await conversation.end()
+      return selectedDishes
+    } else return SelectDishesForOrder(conversation)
   } catch (error) {
     console.error('[BOT] [SELECTION] SELECTING DISHES FOR ORDER ERROR: ', error)
     if (typeof error === 'string') await conversation.say(error)
     else await conversation.say('Something went wrong, please try again later!')
+    await conversation.end()
     return new Map<string, Dish>()
   }
 }

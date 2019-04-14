@@ -1,8 +1,7 @@
 export enum CONTENT_TYPE {
-  TEXT = 'text',
+  EMAIL = 'user_email',
   LOCATION = 'location',
-  PHONE_NUMBER = 'user_phone_number',
-  EMAIL = 'user_email'
+  PHONE_NUMBER = 'user_phone_number'
 }
 
 export interface Attachment {

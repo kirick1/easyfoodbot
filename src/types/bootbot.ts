@@ -101,7 +101,7 @@ export interface IChat {
 export interface IConversation extends IChat {
   bot: IBot
   userId: string
-  ask (question: string | object | Array<any>, answer: Function, callbacks?: Array<Function>, options?: SendMessageOptions): Promise<void>
+  ask (question: string | object | Array<any>, answer: Function, callbacks?: Array<Function>, options?: SendMessageOptions): void
   respond (payload: object, data: object): Promise<void>
   isActive (): boolean
   isWaitingForAnswer (): boolean

@@ -56,6 +56,15 @@ export class Order {
       location: this.location
     }
   }
+  async getLocation (): Promise<Location> {
+    return Location.getByID(this.location)
+  }
+  async setLocation (chat: IChat): Promise<Order> {
+    const location = await Conversation.askLocation(chat)
+    this.location = location.id
+    await db.query(`UPDATE orders SET location = $1, updated_at = now() at time zone 'utc' WHERE id = $2`, [this.location, this.id])
+    return this
+  }
   async getDishes (): Promise<Map<string, Dish>> {
     if (this.dishes.size > 0) return this.dishes
     const { rows: orderDishesIDs } = await db.query('SELECT dish_id, number FROM order_dishes WHERE order_id = $1', [this.id])
@@ -81,29 +90,19 @@ export class Order {
     await order.getDishes()
     return order
   }
-  static async create (dishes: Map<string, Dish>, user: User, location: Location, notify: boolean = true): Promise<Order> {
-    const totalPrice = Dish.getDishesMapTotalPrice(dishes)
-    const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price, location) VALUES ($1, $2, $3) RETURNING *', [user.id, totalPrice, location.id])
-    for (const dish of dishes.values()) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1])
+  static async create (selectedDishes: Map<string, Dish>, user: User, notify: boolean = true): Promise<Order> {
+    const totalPrice = Dish.getDishesMapTotalPrice(selectedDishes)
+    const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice])
+    for (const dish of selectedDishes.values()) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1])
     const order = new Order(orderData)
     if (notify) await db.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`)
     return order
   }
   static async makeImmediateOrder (chat: IChat, user: User): Promise<Order> {
-    const conversation = await Conversation.createConversation(chat)
-    try {
-      const dishes = await SelectDishesForOrder(conversation)
-      const attachment = await Conversation.askLocation(conversation)
-      const location = await Location.createFromAttachment(attachment)
-      const order = await Order.create(dishes, user, location)
-      await order.showReceipt(chat, user)
-      await conversation.end()
-      return order
-    } catch (error) {
-      console.error('[BOT] [ORDER] ERROR MAKING IMMEDIATE ORDER: ', error)
-      await conversation.end()
-      throw Error(error)
-    }
+    const selectedDishes = await SelectDishesForOrder(chat)
+    const order = await Order.create(selectedDishes, user)
+    await order.setLocation(chat)
+    return order
   }
   static async toArray (orders: Array<IOrder>): Promise<Array<Order>> {
     const result = []
