@@ -1,8 +1,9 @@
 import db from '../database'
 import { User, Order } from '.'
+import { Attachment } from '../types'
 
 export interface ILocation {
-  id: number
+  id: number | null
   title: string
   url: string
   latitude: number
@@ -15,23 +16,43 @@ export interface ICoordinates {
 }
 
 export class Location implements ILocation {
-  id: number
+  id: number | null
   title: string
   url: string
   latitude: number
   longitude: number
-  constructor (value: ILocation) {
-    this.id = value.id
-    this.title = value.title
-    this.url = value.url
-    this.latitude = value.latitude
-    this.longitude = value.longitude
+  constructor (location: ILocation) {
+    this.id = location.id
+    this.title = location.title
+    this.url = location.url
+    this.latitude = location.latitude
+    this.longitude = location.longitude
   }
-  async update (coordinates: ICoordinates): Promise<Location> {
-    this.latitude = coordinates.lat
-    this.longitude = coordinates.long
+  async save (): Promise<Location> {
+    const { rows: [{ id }] } = await db.query('INSERT INTO locations (title, url, latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING id', [this.title, this.url, this.latitude, this.longitude])
+    this.id = parseInt(id, 10)
+    return this
+  }
+  async update (): Promise<Location> {
     await db.query('UPDATE locations SET latitude = $1, longitude = $2 WHERE id = $3', [this.latitude, this.longitude, this.id])
     return this
+  }
+  setAttachmentData (attachment: Attachment): Location {
+    this.latitude = attachment.payload.coordinates.lat
+    this.longitude = attachment.payload.coordinates.long
+    return this
+  }
+  static async createFromAttachment (attachment: Attachment): Promise<Location> {
+    const locationData: ILocation = {
+      id: null,
+      title: attachment.title,
+      url: attachment.url,
+      latitude: attachment.payload.coordinates.lat,
+      longitude: attachment.payload.coordinates.long
+    }
+    const location = new Location(locationData)
+    await location.save()
+    return location
   }
   static async isExists (locationID?: number | null): Promise<boolean> {
     if (locationID === undefined || locationID === null) return false
@@ -41,6 +62,12 @@ export class Location implements ILocation {
   static async create (coordinates: ICoordinates, title: string, url: string): Promise<Location> {
     const { rows: [created] } = await db.query('INSERT INTO locations (title, url, latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING *', [title, url, coordinates.lat, coordinates.long])
     return new Location(created)
+  }
+  static async getByID (locationID?: number | null): Promise<Location> {
+    if (!locationID) throw Error('Location ID is required!')
+    const { rows: [locationData] } = await db.query('SELECT * FROM locations WHERE id = $1', [locationID])
+    if (!locationData) throw Error('Location not found!')
+    return new Location(locationData)
   }
   static async getForUser (user: User): Promise<Location> {
     const { rows: [location] } = await db.query('SELECT * FROM locations WHERE id = $1', [user.location])

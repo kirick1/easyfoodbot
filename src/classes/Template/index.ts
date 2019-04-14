@@ -1,4 +1,4 @@
-import { Order, Dish, User } from '..'
+import { Order, Dish, User, Location } from '..'
 import { GenericTemplate } from './generic'
 import { ReceiptTemplate } from './receipt'
 

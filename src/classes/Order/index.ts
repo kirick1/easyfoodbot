@@ -41,7 +41,7 @@ export class Order {
     this.location = order.location
   }
   getTotalPrice (): number {
-    return Dish.getDishesMapTotalPrice(this.dishes)
+    return this.dishes && this.dishes.size > 0 ? Dish.getDishesMapTotalPrice(this.dishes) : 0.0
   }
   getInformation (): IOrder {
     return {
@@ -93,10 +93,12 @@ export class Order {
     const conversation = await Conversation.createConversation(chat)
     try {
       const dishes = await SelectDishesForOrder(conversation)
-      const locationData = await Conversation.askLocation(conversation)
-      const location = await Location.create(locationData.payload.coordinates, locationData.title, locationData.url)
+      const attachment = await Conversation.askLocation(conversation)
+      const location = await Location.createFromAttachment(attachment)
+      const order = await Order.create(dishes, user, location)
+      await order.showReceipt(chat, user)
       await conversation.end()
-      return await Order.create(dishes, user, location)
+      return order
     } catch (error) {
       console.error('[BOT] [ORDER] ERROR MAKING IMMEDIATE ORDER: ', error)
       await conversation.end()

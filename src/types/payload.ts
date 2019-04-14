@@ -1,12 +1,14 @@
 export enum CONTENT_TYPE {
+  TEXT = 'text',
   LOCATION = 'location',
   PHONE_NUMBER = 'user_phone_number',
   EMAIL = 'user_email'
 }
+
 export interface Attachment {
   title: string
   url: string
-  type: CONTENT_TYPE.LOCATION
+  type: CONTENT_TYPE
   payload: {
     coordinates: {
       lat: number

@@ -1,3 +1,4 @@
+import { Location } from '../classes'
 import { MessagePayload, LocationPayload, IChat, IConversation, Attachment, CONTENT_TYPE } from '../types'
 
 export const defaultTextValidator = (text: string, minLength: number = 0, maxLength: number = 8000): boolean => text.length >= minLength && text.length <= maxLength
@@ -39,6 +40,9 @@ export class Conversation {
     return new Promise<Attachment>((resolve) => conversation.ask({
       text: 'Send location',
       quickReplies: [{ content_type: CONTENT_TYPE.LOCATION }]
-    }, async (payload: LocationPayload) => resolve(payload.message.attachments[0])))
+    }, async (payload: any) => {
+      console.log('ATTACHMENT PAYLOAD: ', payload)
+      return resolve(payload.message.attachments[0])
+    }))
   }
 }

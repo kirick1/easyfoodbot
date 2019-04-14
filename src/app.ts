@@ -4,7 +4,7 @@ import { config } from 'dotenv'
 config({ path: join(__dirname, '..', '.env') })
 
 import { IBot, BotOptions } from './types'
-import { PostbackEventHandler } from './controllers'
+import { PostbackEventHandler, AttachmentEventHandler } from './controllers'
 import { GreetingText, PersistentMenu } from './settings'
 
 const BootBot = require('bootbot')
@@ -24,6 +24,7 @@ bot.setGreetingText(GreetingText)
 bot.setPersistentMenu(PersistentMenu)
 
 bot.on('postback', PostbackEventHandler)
+// bot.on('attachment', AttachmentEventHandler)
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000
 

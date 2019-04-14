@@ -1,7 +1,7 @@
 import db from '../database'
 import { isEmail, isURL } from 'validator'
-import { ProfileObject, IChat } from '../types'
-import { Order, Template, Location, ICoordinates, Conversation } from '.'
+import { ProfileObject, IChat, Attachment } from '../types'
+import { Order, Template, Location, Conversation } from '.'
 
 export interface IUser {
   messenger_id: number | null
@@ -58,15 +58,12 @@ export class User {
       return true
     } else return false
   }
-  async setLocation (coordinates: ICoordinates, title: string, url: string): Promise<boolean> {
-    if (await Location.isExists(this.location)) {
-      const existed = await Location.getForUser(this)
-      await existed.update(coordinates)
+  async setLocation (location: Location): Promise<boolean> {
+    if (location) {
+      this.location = location.id
+      await db.query(`UPDATE users SET location = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.location, this.messengerID])
       return true
-    } else {
-      const created = await Location.create(coordinates, title, url)
-      return !!created
-    }
+    } else return false
   }
   async setProfileURL (value: string): Promise<boolean> {
     if (isURL(value)) {
@@ -124,29 +121,44 @@ export class User {
     profile.messenger_id = profile.id
     delete profile.id
     this.setProfile(profile)
-    const { rows: [user] } = await db.query('SELECT messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url FROM users WHERE messenger_id = $1', [this.messengerID])
+    const { rows: [user] } = await db.query('SELECT messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url, location FROM users WHERE messenger_id = $1', [this.messengerID])
     if (!user) {
-      const { rows: [created] } = await db.query('INSERT INTO users (messenger_id, first_name, last_name, profile_pic, locale, gender, email, phone, profile_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url', [this.messengerID, this.firstName, this.lastName, this.profilePic, this.locale, this.gender, this.email, this.phone, this.profileURL])
+      const { rows: [created] } = await db.query('INSERT INTO users (messenger_id, first_name, last_name, profile_pic, locale, gender, email, phone, profile_url, location) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url', [this.messengerID, this.firstName, this.lastName, this.profilePic, this.locale, this.gender, this.email, this.phone, this.profileURL, this.location])
       this.setUser(created)
     } else this.setUser(user)
     return this.getInformation()
   }
-  async setContactInformation (chat: IChat): Promise<IUser> {
+  async setDefaultLocation (chat: IChat): Promise<IUser> {
     const conversation = await Conversation.createConversation(chat)
-    if (!this.email) {
-      const email = await Conversation.askEmail(conversation)
-      conversation.set('email', email)
-      await this.setEmail(email)
-    }
-    if (!this.phone) {
-      const phone = await Conversation.askPhoneNumber(conversation)
-      conversation.set('phone', phone)
-      await this.setPhone(phone)
-    }
+    const attachment = await Conversation.askLocation(conversation)
+    const location = await Location.createFromAttachment(attachment)
+    conversation.set('location', location)
+    await this.setLocation(location)
     await conversation.end()
     return this.getInformation()
   }
-  showContactInformation (chat: IChat): Promise<any> {
+  async showDefaultLocation (chat: IChat): Promise<any> {
+    const location = this.location ? await this.getLocation() : null
+    return location
+      ? chat.sendButtonTemplate('Account default location', [{
+        type: 'web_url',
+        url: location.url,
+        title: location.title
+      }])
+      : chat.say('Default location for your account not found!')
+  }
+  async setContactInformation (chat: IChat): Promise<IUser> {
+    const conversation = await Conversation.createConversation(chat)
+    const email = await Conversation.askEmail(conversation)
+    conversation.set('email', email)
+    await this.setEmail(email)
+    const phone = await Conversation.askPhoneNumber(conversation)
+    conversation.set('phone', phone)
+    await this.setPhone(phone)
+    await conversation.end()
+    return this.getInformation()
+  }
+  async showContactInformation (chat: IChat): Promise<any> {
     return this.email !== null && this.phone !== null
       ? chat.sendGenericTemplate([Template.getContactInformationGenericMessage(this)])
       : chat.say('Contact information for your account not found!')

@@ -29,6 +29,7 @@ const selectDishesSet = async (conversation: IConversation, dishesSets: Map<stri
     return selectedDishesSet.dishes
   }
 }
+
 const selectDishesFromDishesSet = async (conversation: IConversation, dishesSets: Map<string, DishesSet>, dishesMap: Map<string, Dish> = new Map<string, Dish>(), text: string | null = null): Promise<Map<string, Dish>> => {
   if (dishesMap.size === 0) {
     const dishesSetDishes = await selectDishesSet(conversation, dishesSets)
@@ -83,6 +84,7 @@ const selectDishesFromDishesSet = async (conversation: IConversation, dishesSets
     }
   }
 }
+
 export const SelectDishesForOrder = async (conversation: IConversation): Promise<Map<string, Dish>> => {
   conversation.set(SELECTION_DEFAULT_KEYS.SELECTED_DISHES, new Map<string, Dish>())
   const dishesSets: Map<string, DishesSet> = await DishesSet.getAllDishesSets()
