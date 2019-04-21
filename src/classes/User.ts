@@ -1,7 +1,7 @@
 import db from '../database'
 import { isEmail, isURL } from 'validator'
-import { ProfileObject, IChat } from '../types'
-import { Order, Template, Location, Conversation } from '.'
+import { IChat, ProfileObject } from '../types'
+import { Conversation, Location, Order, OrderStatus, Template } from '.'
 
 export interface IUser {
   messenger_id: number | null
@@ -44,44 +44,38 @@ export class User {
       this.location = user.location
     }
   }
-  async setEmail (value: string): Promise<boolean> {
-    if (isEmail(value)) {
-      this.email = value
-      await db.query(`UPDATE users SET email = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.email, this.messengerID])
-      return true
-    } else return false
+  async setEmail (value: string): Promise<User> {
+    if (!isEmail(value)) throw Error('Email is not valid!')
+    this.email = value
+    await db.query(`UPDATE users SET email = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.email, this.messengerID])
+    return this
   }
-  async setPhone (value: string): Promise<boolean> {
-    if (value) {
-      this.phone = value
-      await db.query(`UPDATE users SET phone = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.phone, this.messengerID])
-      return true
-    } else return false
+  async setPhone (value: string): Promise<User> {
+    this.phone = value
+    await db.query(`UPDATE users SET phone = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.phone, this.messengerID])
+    return this
   }
-  async setLocation (location: Location): Promise<boolean> {
-    if (location) {
-      this.location = location.id
-      await db.query(`UPDATE users SET location = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.location, this.messengerID])
-      return true
-    } else return false
+  async setLocation (location: Location): Promise<User> {
+    this.location = location.id
+    await db.query(`UPDATE users SET location = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.location, this.messengerID])
+    return this
   }
-  async setProfileURL (value: string): Promise<boolean> {
-    if (isURL(value)) {
-      this.profileURL = value
-      await db.query(`UPDATE users SET profile_url = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.profileURL, this.messengerID])
-      return true
-    } else return false
+  async setProfileURL (value: string): Promise<User> {
+    if (!isURL(value)) throw Error()
+    this.profileURL = value
+    await db.query(`UPDATE users SET profile_url = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.profileURL, this.messengerID])
+    return this
   }
-  setProfile (profile: ProfileObject): IUser {
+  setProfile (profile: ProfileObject): User {
     this.messengerID = profile.messenger_id || this.messengerID
     this.firstName = profile.first_name || this.firstName
     this.lastName = profile.last_name || this.lastName
     this.profilePic = profile.profile_pic || this.profilePic
     this.locale = profile.locale || this.locale
     this.gender = profile.gender || this.gender
-    return this.getInformation()
+    return this
   }
-  setUser (user: IUser): IUser {
+  setUser (user: IUser): User {
     this.messengerID = user.messenger_id || this.messengerID
     this.firstName = user.first_name || this.firstName
     this.lastName = user.last_name || this.lastName
@@ -93,22 +87,7 @@ export class User {
     this.phone = user.phone || this.phone
     this.profileURL = user.profile_url || this.profileURL
     this.location = user.location || this.location
-    return this.getInformation()
-  }
-  getInformation (): IUser {
-    return {
-      messenger_id: this.messengerID,
-      first_name: this.firstName,
-      last_name: this.lastName,
-      profile_pic: this.profilePic,
-      locale: this.locale,
-      gender: this.gender,
-      id: this.id,
-      email: this.email,
-      phone: this.phone,
-      profile_url: this.profileURL,
-      location: this.location
-    }
+    return this
   }
   getFullName (): string {
     return `${this.firstName} ${this.lastName}`
@@ -116,7 +95,7 @@ export class User {
   async getDefaultLocation (): Promise<Location> {
     return Location.getByID(this.location)
   }
-  async syncInformation (chat: IChat): Promise<IUser> {
+  async syncInformation (chat: IChat): Promise<User> {
     const profile = await chat.getUserProfile()
     profile.messenger_id = profile.id
     delete profile.id
@@ -126,12 +105,12 @@ export class User {
       const { rows: [created] } = await db.query('INSERT INTO users (messenger_id, first_name, last_name, profile_pic, locale, gender, email, phone, profile_url, location) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING messenger_id, first_name, last_name, profile_pic, locale, gender, id, email, phone, profile_url', [this.messengerID, this.firstName, this.lastName, this.profilePic, this.locale, this.gender, this.email, this.phone, this.profileURL, this.location])
       this.setUser(created)
     } else this.setUser(user)
-    return this.getInformation()
+    return this
   }
-  async setDefaultLocation (chat: IChat): Promise<IUser> {
+  async setDefaultLocation (chat: IChat): Promise<User> {
     const location = await Conversation.askLocation(chat)
     await this.setLocation(location)
-    return this.getInformation()
+    return this
   }
   async showDefaultLocation (chat: IChat): Promise<any> {
     if (!this.location) return chat.say('Default location for your account not found!')
@@ -142,12 +121,12 @@ export class User {
       title: location.title
     }])
   }
-  async setContactInformation (chat: IChat): Promise<IUser> {
+  async setContactInformation (chat: IChat): Promise<User> {
     const email = await Conversation.askEmail(chat)
     await this.setEmail(email)
     const phone = await Conversation.askPhoneNumber(chat)
     await this.setPhone(phone)
-    return this.getInformation()
+    return this
   }
   async showContactInformation (chat: IChat): Promise<any> {
     return this.email !== null && this.phone !== null
@@ -155,21 +134,21 @@ export class User {
       : chat.say('Contact information for your account not found!')
   }
   async getCreatedOrders (): Promise<Array<Order>> {
-    const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'new'`, [this.id])
+    const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = ${OrderStatus.NEW}`, [this.id])
     return Order.toArray(rows)
   }
   async getCurrentOrders (): Promise<Array<Order>> {
-    const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'progress'`, [this.id])
+    const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = ${OrderStatus.PROGRESS}`, [this.id])
     return Order.toArray(rows)
   }
   async getCompletedOrders (): Promise<Array<Order>> {
-    const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = 'done'`, [this.id])
+    const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = ${OrderStatus.DONE}`, [this.id])
     return Order.toArray(rows)
   }
   static async cancelOrder (order: Order): Promise<boolean> {
-    const { rows: [canceledOrderData] } = await db.query(`UPDATE orders SET status = 'canceled', completed_at = now() at time zone 'utc', updated_at = now() at time zone 'utc' WHERE id = $1 RETURNING *`, [order.id])
+    const { rows: [canceledOrderData] } = await db.query(`UPDATE orders SET status = ${OrderStatus.CANCELED}, completed_at = now() at time zone 'utc', updated_at = now() at time zone 'utc' WHERE id = $1 RETURNING *`, [order.id])
     const canceledOrder = new Order(canceledOrderData)
-    return canceledOrder.status === 'canceled'
+    return canceledOrder.status === OrderStatus.CANCELED
   }
   async writeFeedBack (chat: IChat): Promise<boolean> {
     const conversation = await Conversation.createConversation(chat)

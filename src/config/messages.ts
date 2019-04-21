@@ -1,0 +1,21 @@
+export enum Messages {
+  UNKNOWN_COMMAND = 'Unknown command!',
+  SOMETHING_WENT_WRONG = 'Something went wrong, please try again!',
+  MAKE_ORDER = 'Make order',
+  MY_ORDERS = 'My orders',
+  CREATED_ORDERS = 'Created',
+  CURRENT_ORDERS = 'Current',
+  COMPLETED_ORDERS = 'Completed',
+  MORE = 'More',
+  ACCOUNT = 'Account',
+  SHOW_CONTACT_INFORMATION = 'Show contact information',
+  UPDATE_CONTACT_INFORMATION = 'Update contact information',
+  SHOW_DEFAULT_LOCATION = 'Show default location',
+  UPDATE_DEFAULT_LOCATION = 'Update default location',
+  WRITE_FEEDBACK = 'Write feedback',
+  NO_CREATED_ORDERS = 'There are no created orders!',
+  NO_CURRENT_ORDERS = 'There are no current orders!',
+  NO_COMPLETED_ORDERS = 'There are no completed orders!',
+  NO_DISHES = 'No dishes',
+  NO_DISHES_SETS_YET = 'There are no sets yet!'
+}

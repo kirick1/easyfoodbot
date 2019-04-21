@@ -1,22 +1,28 @@
 import db from '../../database'
 import { IChat } from '../../types'
-import { SelectDishesForOrder } from './selection'
+import { Selection } from './Selection'
 import { Dish, User, Template, Location, Conversation } from '..'
 
-export type Status = 'new' | 'progress' | 'done' | 'canceled'
-
-export type TypeOfRepetitions = 'immediate'
+export enum OrderStatus {
+  NEW = 'new',
+  PROGRESS = 'progress',
+  DONE = 'done',
+  CANCELED = 'canceled'
+}
+export enum OrderTypeOfRepetitions {
+  IMMEDIATE = 'immediate'
+}
 
 export interface IOrder {
   id: number | null
   user_id: number | null
   total_price: number | null
   number_of_repetitions: number | null
-  type_of_repetitions: TypeOfRepetitions
-  status: Status
+  type_of_repetitions: OrderTypeOfRepetitions
+  status: OrderStatus
   is_completed: boolean
-  dishes?: Map<string, Dish> | null
   location: number | null
+  dishes?: Map<string, Dish> | null
 }
 
 export class Order {
@@ -24,8 +30,8 @@ export class Order {
   userID: number | null
   totalPrice: number | null = 0.0
   numberOfRepetitions: number | null = 0
-  typeOfRepetitions: TypeOfRepetitions = 'immediate'
-  status: Status = 'new'
+  typeOfRepetitions: OrderTypeOfRepetitions = OrderTypeOfRepetitions.IMMEDIATE
+  status: OrderStatus = OrderStatus.NEW
   isCompleted: boolean = false
   dishes: Map<string, Dish> = new Map<string, Dish>()
   location: number | null = null
@@ -34,8 +40,8 @@ export class Order {
     this.userID = order.user_id
     this.totalPrice = order.total_price || 0.0
     this.numberOfRepetitions = order.number_of_repetitions || 0
-    this.typeOfRepetitions = order.type_of_repetitions || 'immediate'
-    this.status = order.status || 'new'
+    this.typeOfRepetitions = order.type_of_repetitions || OrderTypeOfRepetitions.IMMEDIATE
+    this.status = order.status || OrderStatus.NEW
     this.isCompleted = order.is_completed
     this.dishes = order.dishes instanceof Map && order.dishes.size > 0 ? order.dishes : new Map<string, Dish>()
     this.location = order.location
@@ -80,7 +86,7 @@ export class Order {
     return Array.from(dishes.values())
   }
   async showReceipt (chat: IChat, user: User): Promise<void> {
-    return this.status === 'new'
+    return this.status === OrderStatus.NEW
       ? chat.sendTemplate(await Template.getOrderReceiptMessage(this, user))
       : chat.sendGenericTemplate([await Template.getOrderGenericMessage(this)])
   }
@@ -99,7 +105,7 @@ export class Order {
     return order
   }
   static async makeImmediateOrder (chat: IChat, user: User): Promise<Order> {
-    const selectedDishes = await SelectDishesForOrder(chat)
+    const selectedDishes = await Selection.selectDishesForOrder(chat)
     const order = await Order.create(selectedDishes, user)
     await order.setLocation(chat)
     return order

@@ -1,1 +1,1 @@
-export { PostbackEventHandler } from './postback'
+export { PostbackEventController } from './postback'

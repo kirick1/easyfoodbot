@@ -1,4 +1,5 @@
 import { Template, Element } from '..'
+import { Information, Messages } from '../../config'
 import { IChat, IConversation } from '../../types'
 
 export interface IDish {
@@ -7,6 +8,7 @@ export interface IDish {
   description: string
   photo: string
   price: number
+  informationURL?: string
   numberInOrder?: number
 }
 
@@ -16,6 +18,7 @@ export class Dish implements IDish {
   description: string
   photo: string
   price: number = 0.0
+  informationURL: string = Information.DEFAULT_INFORMATION_URL
   numberInOrder: number = 0
   constructor (dish: IDish, numberInOrder: number = 0) {
     this.id = dish.id
@@ -23,6 +26,7 @@ export class Dish implements IDish {
     this.description = dish.description
     this.photo = dish.photo
     this.price = dish.price || 0.0
+    this.informationURL = dish.informationURL || Information.DEFAULT_INFORMATION_URL
     this.numberInOrder = dish.numberInOrder || 0
     if (numberInOrder > 0) this.numberInOrder = numberInOrder
   }
@@ -35,8 +39,11 @@ export class Dish implements IDish {
   getTotalPrice (): number {
     return this.numberInOrder > 0 ? this.price * this.numberInOrder : this.price
   }
+  getInformationURL (): string {
+    return this.informationURL ? this.informationURL : Information.DEFAULT_INFORMATION_URL
+  }
   getTotalPriceString (): string {
-    return `${this.getTotalPrice().toFixed(2)}€`
+    return `${this.getTotalPrice().toFixed(2)}${Information.CURRENCY_SYMBOL}`
   }
   getPriceListString (): string {
     return this.isInOrder()
@@ -49,12 +56,12 @@ export class Dish implements IDish {
       subtitle: this.description,
       quantity: this.numberInOrder,
       price: this.getTotalPrice(),
-      currency: 'EUR',
+      currency: Information.CURRENCY,
       image_url: this.photo
     }
   }
-  static getSelectedDishesPriceListString (dishesMap: Map<string, Dish>, currency: string = '€'): string {
-    if (dishesMap.size === 0) return 'No dishes!'
+  static getSelectedDishesPriceListString (dishesMap: Map<string, Dish>, currency: string = Information.CURRENCY_SYMBOL): string {
+    if (dishesMap.size === 0) return Messages.NO_DISHES
     let result = 'Selected dishes:\n\n'
     for (const dish of dishesMap.values()) result += dish.getPriceListString()
     result += `\nTotal price: ${Dish.getDishesMapTotalPriceString(dishesMap, currency)}`
@@ -63,12 +70,12 @@ export class Dish implements IDish {
   static getDishesMapTotalPrice (dishesMap: Map<string, Dish>): number {
     return Array.from(dishesMap.values()).reduce((total: number, current: Dish) => total + current.getTotalPrice(), 0.0)
   }
-  static getDishesMapTotalPriceString (dishesMap: Map<string, Dish>, currency: string = '€'): string {
+  static getDishesMapTotalPriceString (dishesMap: Map<string, Dish>, currency: string = Information.CURRENCY): string {
     return `${Dish.getDishesMapTotalPrice(dishesMap).toFixed(2)}${currency}`
   }
   static async showDishesMapInformation (conversation: IConversation | IChat, dishesMap: Map<string, Dish>): Promise<any> {
     return dishesMap.size > 0
       ? conversation.sendGenericTemplate(Template.getDishesMapGenericMessage(dishesMap))
-      : conversation.say('No dishes!')
+      : conversation.say(Messages.NO_DISHES)
   }
 }

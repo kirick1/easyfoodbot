@@ -1,32 +1,36 @@
-import { Order, Dish, User } from '..'
+import { Dish, Order, User } from '..'
 import { GenericTemplate } from './generic'
 import { ReceiptTemplate } from './receipt'
+import { Commands, Information, Messages } from '../../config'
 
 export class Template {
   static async getOrderReceiptMessage (order: Order, user: User): Promise<ReceiptTemplate> {
+    const dishesElements = (await order.getDishesArray()).map((dish: Dish) => dish.getElementData()) || []
     return {
       template_type: 'receipt',
       recipient_name: user.getFullName(),
-      merchant_name: 'EasyFood Delivery',
+      merchant_name: Information.MERCHANT_NAME,
       order_number: `${order.id}`,
-      currency: 'EUR',
-      payment_method: 'Cash',
+      currency: Information.CURRENCY,
+      payment_method: Information.PAYMENT_METHOD,
       summary: {
         subtotal: order.getTotalPrice(),
         total_cost: order.getTotalPrice()
       },
-      elements: (await order.getDishesArray()).map((dish: Dish) => dish.getElementData()) || []
+      elements: dishesElements
     }
   }
   static async getOrderGenericMessage (order: Order): Promise<GenericTemplate> {
     return {
       title: `Order #${order.id}`,
-      subtitle: `Price: ${order.getTotalPrice().toFixed(2)}€`,
-      buttons: [{
-        title: 'Cancel',
-        type: 'postback',
-        payload: `ORDERS_CANCEL___${order.id}`
-      }]
+      subtitle: `Price: ${order.getTotalPrice().toFixed(2)}${Information.CURRENCY_SYMBOL}`,
+      buttons: [
+        {
+          title: 'Cancel',
+          type: 'postback',
+          payload: `ORDERS_CANCEL___${order.id}`
+        }
+      ]
     }
   }
   static getDishGenericMessage (dish: Dish): GenericTemplate {
@@ -42,7 +46,7 @@ export class Template {
         },
         {
           type: 'web_url',
-          url: 'https://www.google.com',
+          url: dish.getInformationURL(),
           title: 'More'
         }
       ]
@@ -61,19 +65,19 @@ export class Template {
       subtitle: subtitle,
       buttons: [
         {
-          title: 'Update contact information',
+          title: Messages.UPDATE_CONTACT_INFORMATION,
           type: 'postback',
-          payload: 'ACCOUNT_UPDATE_CONTACT_INFORMATION'
+          payload: Commands.UPDATE_CONTACT_INFORMATION
         },
         {
-          title: 'Show default location',
+          title: Messages.SHOW_DEFAULT_LOCATION,
           type: 'postback',
-          payload: 'ACCOUNT_SHOW_DEFAULT_LOCATION'
+          payload: Commands.SHOW_DEFAULT_LOCATION
         },
         {
-          title: 'Update default location',
+          title: Messages.UPDATE_DEFAULT_LOCATION,
           type: 'postback',
-          payload: 'ACCOUNT_UPDATE_DEFAULT_LOCATION'
+          payload: Commands.UPDATE_DEFAULT_LOCATION
         }
       ]
     }
