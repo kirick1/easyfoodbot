@@ -70,7 +70,7 @@ export class Dish implements IDish {
   static getDishesMapTotalPrice (dishesMap: Map<string, Dish>): number {
     return Array.from(dishesMap.values()).reduce((total: number, current: Dish) => total + current.getTotalPrice(), 0.0)
   }
-  static getDishesMapTotalPriceString (dishesMap: Map<string, Dish>, currency: string = Information.CURRENCY): string {
+  static getDishesMapTotalPriceString (dishesMap: Map<string, Dish>, currency: string = Information.CURRENCY_SYMBOL): string {
     return `${Dish.getDishesMapTotalPrice(dishesMap).toFixed(2)}${currency}`
   }
   static async showDishesMapInformation (conversation: IConversation | IChat, dishesMap: Map<string, Dish>): Promise<any> {

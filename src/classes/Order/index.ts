@@ -13,6 +13,11 @@ export enum OrderTypeOfRepetitions {
   IMMEDIATE = 'immediate'
 }
 
+enum SELECTION_KEYS {
+  DEFAULT = 'Default',
+  CURRENT = 'Current'
+}
+
 export interface IOrder {
   id: number | null
   user_id: number | null
@@ -65,9 +70,19 @@ export class Order {
   async getLocation (): Promise<Location> {
     return Location.getByID(this.location)
   }
-  async setLocation (chat: IChat): Promise<Order> {
-    const location = await Conversation.askLocation(chat)
-    this.location = location.id
+  async setLocation (chat: IChat, user: User): Promise<Order> {
+    const defaultLocation = await user.getDefaultLocation()
+    if (defaultLocation === null) {
+      const currentLocation = await Conversation.askLocation(chat)
+      this.location = currentLocation.id
+    } else {
+      const change = await Conversation.askSelection(chat, 'Select location for delivery', [SELECTION_KEYS.DEFAULT, SELECTION_KEYS.CURRENT])
+      if (change === SELECTION_KEYS.DEFAULT) this.location = defaultLocation.id
+      else if (change === SELECTION_KEYS.CURRENT) {
+        const currentLocation = await Conversation.askLocation(chat)
+        this.location = currentLocation.id
+      }
+    }
     await db.query(`UPDATE orders SET location = $1, updated_at = now() at time zone 'utc' WHERE id = $2`, [this.location, this.id])
     return this
   }
@@ -107,7 +122,7 @@ export class Order {
   static async makeImmediateOrder (chat: IChat, user: User): Promise<Order> {
     const selectedDishes = await Selection.selectDishesForOrder(chat)
     const order = await Order.create(selectedDishes, user)
-    await order.setLocation(chat)
+    await order.setLocation(chat, user)
     return order
   }
   static async toArray (orders: Array<IOrder>): Promise<Array<Order>> {

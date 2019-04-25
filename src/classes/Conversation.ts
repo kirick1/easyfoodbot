@@ -2,7 +2,7 @@ import { Messages } from '../config'
 import { Location } from '../classes'
 import { CONTENT_TYPE, IChat, IConversation, LocationPayload, MessagePayload } from '../types'
 
-export const defaultTextValidator = (text: string, minLength: number = 0, maxLength: number = 8000): boolean => text.length >= minLength && text.length <= maxLength
+export const defaultTextValidator = (text: string, minLength: number = 0, maxLength: number = 8000): boolean => text !== undefined && text !== null && text !== '' && text.length >= minLength && text.length <= maxLength
 
 export class Conversation {
   static createConversation (chat: IChat): Promise<IConversation> {
@@ -12,6 +12,11 @@ export class Conversation {
     return new Promise<boolean>((resolve) => conversation.ask({
       text, quickReplies: [Messages.YES, Messages.NO]
     }, (payload: MessagePayload) => resolve(payload.message.text === Messages.YES)))
+  }
+  static askSelection (chat: IChat, text: string = 'Select one', elements: Array<string> = []): Promise<string> {
+    return new Promise<string>((resolve) => chat.conversation((conversation: IConversation) => conversation.ask({
+      text, quickReplies: elements
+    }, async (payload: MessagePayload) => resolve(payload.message.text))))
   }
   static askQuestion (conversation: IConversation, question: any, askConfirmation: boolean = false, validator: Function = defaultTextValidator): Promise<string> {
     return new Promise<string>((resolve) => conversation.ask(question, async (payload: MessagePayload) => {

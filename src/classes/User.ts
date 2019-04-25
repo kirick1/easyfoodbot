@@ -93,7 +93,8 @@ export class User {
   getFullName (): string {
     return `${this.firstName} ${this.lastName}`
   }
-  async getDefaultLocation (): Promise<Location> {
+  async getDefaultLocation (): Promise<Location | null> {
+    if (!this.location) return null
     return Location.getByID(this.location)
   }
   async syncInformation (chat: IChat): Promise<User> {
@@ -116,11 +117,13 @@ export class User {
   async showDefaultLocation (chat: IChat): Promise<any> {
     if (!this.location) return chat.say(Messages.NO_DEFAULT_LOCATION)
     const location = await this.getDefaultLocation()
-    return chat.sendButtonTemplate(Messages.DEFAULT_LOCATION, [{
-      type: ButtonType.WEB_URL,
-      url: location.url,
-      title: location.title
-    }])
+    if (location !== null) {
+      return chat.sendButtonTemplate(Messages.DEFAULT_LOCATION, [{
+        type: ButtonType.WEB_URL,
+        url: location.url,
+        title: location.title
+      }])
+    }
   }
   async setContactInformation (chat: IChat): Promise<User> {
     const email = await Conversation.askEmail(chat)
