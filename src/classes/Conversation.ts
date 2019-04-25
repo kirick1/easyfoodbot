@@ -10,8 +10,7 @@ export class Conversation {
   }
   static askYesNo (conversation: IConversation, text: string = Messages.RIGHT): Promise<boolean> {
     return new Promise<boolean>((resolve) => conversation.ask({
-      text,
-      quickReplies: [Messages.YES, Messages.NO]
+      text, quickReplies: [Messages.YES, Messages.NO]
     }, (payload: MessagePayload) => resolve(payload.message.text === Messages.YES)))
   }
   static askQuestion (conversation: IConversation, question: any, askConfirmation: boolean = false, validator: Function = defaultTextValidator): Promise<string> {
