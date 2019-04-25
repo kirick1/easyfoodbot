@@ -43,8 +43,7 @@ export class Selection {
     }
     if (text === null && selectedDishes.size > 0) text = Dish.getSelectedDishesPriceListString(selectedDishes)
     const answer = await Conversation.askQuestion(conversation, {
-      text: text,
-      quickReplies: [...dishesMap.keys(), SELECTION_KEYS.SETS, SELECTION_KEYS.SUBMIT, SELECTION_KEYS.CANCEL]
+      text, quickReplies: [...dishesMap.keys(), SELECTION_KEYS.SETS, SELECTION_KEYS.SUBMIT, SELECTION_KEYS.CANCEL]
     })
     switch (answer) {
       case SELECTION_KEYS.SETS: {

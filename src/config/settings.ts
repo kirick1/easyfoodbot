@@ -1,10 +1,16 @@
 import { ButtonType } from '../types'
 import { Commands, Information, Messages } from '.'
 
+enum UsernameType {
+  FIRST = 'user_full_name',
+  LAST = 'user_last_name',
+  FULL = 'user_full_name'
+}
+
 export const GreetingText = [
   {
     locale: Information.LOCALE,
-    text: `Hello, {{user.full_name}}! Welcome to ${Information.BOT_NAME}!`
+    text: `Hello, {{${UsernameType.FULL}}! Welcome to ${Information.BOT_NAME}!`
   }
 ]
 
