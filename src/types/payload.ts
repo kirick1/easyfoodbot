@@ -1,8 +1,4 @@
-export enum CONTENT_TYPE {
-  EMAIL = 'user_email',
-  LOCATION = 'location',
-  PHONE_NUMBER = 'user_phone_number'
-}
+import { CONTENT_TYPE } from '.'
 
 export interface Attachment {
   title: string

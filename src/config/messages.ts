@@ -30,6 +30,7 @@ export enum Messages {
   UPDATE_DEFAULT_LOCATION = 'Update default location',
   DEFAULT_LOCATION_UPDATED = 'Default location was updated!',
   WRITE_FEEDBACK = 'Write feedback',
+  NO_ORDER = 'No order!',
   NO_CREATED_ORDERS = 'There are no created orders!',
   NO_CURRENT_ORDERS = 'There are no current orders!',
   NO_COMPLETED_ORDERS = 'There are no completed orders!',

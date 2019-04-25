@@ -1,2 +1,2 @@
-export { IBot, BotOptions, IChat, IConversation, ProfileObject, ButtonType } from './bootbot'
-export { MessagePayload, PostbackPayload, LocationPayload, Attachment, CONTENT_TYPE } from './payload'
+export { MessagePayload, PostbackPayload, LocationPayload, Attachment } from './payload'
+export { IBot, BotOptions, IChat, IConversation, ProfileObject, ButtonType, CONTENT_TYPE } from './bootbot'

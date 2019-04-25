@@ -49,7 +49,7 @@ export const PostbackEventController = async (payload: PostbackPayload, chat: IC
                 const [action, orderID] = command.split('___')
                 switch (action) {
                   case Commands.ORDERS_CANCEL: {
-                    if (!orderID) return chat.say('No order!')
+                    if (!orderID) return chat.say(Messages.NO_ORDER)
                     const order = await Order.getOrderByID(orderID)
                     await User.cancelOrder(order)
                     await chat.say(`Order #${order.id} was canceled!`)

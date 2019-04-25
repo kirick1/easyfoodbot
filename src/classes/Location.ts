@@ -29,8 +29,9 @@ export class Location implements ILocation {
     this.longitude = location.longitude
   }
   async save (): Promise<Location> {
-    const { rows: [{ id }] } = await db.query('INSERT INTO locations (title, url, latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING id', [this.title, this.url, this.latitude, this.longitude])
-    this.id = parseInt(id, 10)
+    const { rows: [location] } = await db.query('INSERT INTO locations (title, url, latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING id', [this.title, this.url, this.latitude, this.longitude])
+    if (!location || !location.id) throw Error('Location was not saved!')
+    this.id = parseInt(location.id, 10)
     return this
   }
   static async createFromAttachment (attachment: Attachment): Promise<Location> {

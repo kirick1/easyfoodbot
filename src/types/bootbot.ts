@@ -7,6 +7,12 @@ export enum ButtonType {
   RECEIPT = 'receipt'
 }
 
+export enum CONTENT_TYPE {
+  EMAIL = 'user_email',
+  LOCATION = 'location',
+  PHONE_NUMBER = 'user_phone_number'
+}
+
 export interface BotOptions {
   accessToken: string
   verifyToken: string

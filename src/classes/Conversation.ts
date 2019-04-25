@@ -1,5 +1,5 @@
-import { Location } from '../classes'
 import { Messages } from '../config'
+import { Location } from '../classes'
 import { CONTENT_TYPE, IChat, IConversation, LocationPayload, MessagePayload } from '../types'
 
 export const defaultTextValidator = (text: string, minLength: number = 0, maxLength: number = 8000): boolean => text.length >= minLength && text.length <= maxLength
