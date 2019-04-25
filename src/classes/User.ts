@@ -45,6 +45,12 @@ export class User {
       this.location = user.location
     }
   }
+  isContactInformationSet (): boolean {
+    return this.phone !== null && this.email !== null
+  }
+  isDefaultLocationSet (): boolean {
+    return this.location !== null
+  }
   async setEmail (value: string): Promise<User> {
     if (!isEmail(value)) throw Error(Messages.INVALID_EMAIL)
     this.email = value

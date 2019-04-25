@@ -1,5 +1,5 @@
 import { Commands, Messages } from '../config'
-import { Order, User } from '../classes'
+import { Order, User, Template } from '../classes'
 import { IChat, PostbackPayload } from '../types'
 
 export const PostbackEventController = async (payload: PostbackPayload, chat: IChat): Promise<any> => {
@@ -9,7 +9,7 @@ export const PostbackEventController = async (payload: PostbackPayload, chat: IC
     const command = payload.postback.payload
     switch (command) {
       case Commands.GET_STARTED: {
-        return chat.say(`Hello, ${user.firstName} ${user.lastName}!`)
+        return chat.sendGenericTemplate([Template.getGetStartedButtonGenericMessage(user)])
       }
       case Commands.WRITE_FEEDBACK: {
         return await user.writeFeedBack(chat)

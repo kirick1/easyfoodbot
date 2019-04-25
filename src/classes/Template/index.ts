@@ -1,10 +1,39 @@
 import { Dish, Order, User } from '..'
-import { GenericTemplate } from './generic'
-import { ReceiptTemplate } from './receipt'
 import { ButtonType } from '../../types'
+import { ReceiptTemplate } from './receipt'
+import { GenericTemplate } from './generic'
 import { Commands, Information, Messages } from '../../config'
 
 export class Template {
+  static getGetStartedButtonGenericMessage (user: User): GenericTemplate {
+    const template: GenericTemplate = {
+      title: `Welcome, ${user.getFullName()}!`,
+      subtitle: 'Click to make order now!',
+      buttons: [
+        {
+          type: ButtonType.POSTBACK,
+          title: Messages.MAKE_ORDER,
+          payload: Commands.MAKE_ORDER_NOW
+        }
+      ]
+    }
+    if (!user.isContactInformationSet()) {
+      template.buttons.push({
+        type: ButtonType.POSTBACK,
+        title: Messages.UPDATE_CONTACT_INFORMATION,
+        payload: Commands.UPDATE_CONTACT_INFORMATION
+      })
+    }
+    if (!user.isDefaultLocationSet()) {
+      template.buttons.push({
+        type: ButtonType.POSTBACK,
+        title: Messages.UPDATE_DEFAULT_LOCATION,
+        payload: Commands.UPDATE_DEFAULT_LOCATION
+      })
+    }
+    if (template.buttons.length > 1) template.subtitle = 'Select one of the following options to start using bot!'
+    return template
+  }
   static async getOrderReceiptMessage (order: Order, user: User): Promise<ReceiptTemplate> {
     const dishes = await order.getDishesArray()
     if (!dishes || dishes.length < 1) throw Error(Messages.NO_DISHES_IN_ORDER)

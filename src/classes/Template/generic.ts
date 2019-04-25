@@ -1,5 +1,7 @@
+import { ButtonType } from '../../types'
+
 export interface PostbackButton {
-  type: string
+  type: ButtonType
   title: string
   url?: string
   payload?: string

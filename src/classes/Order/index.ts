@@ -1,6 +1,7 @@
 import db, { NotificationType } from '../../database'
 import { IChat } from '../../types'
 import { Selection } from './Selection'
+import { Messages } from '../../config'
 import { Dish, User, Template, Location, Conversation } from '..'
 
 export enum OrderStatus {
@@ -71,7 +72,7 @@ export class Order {
     return Location.getByID(this.location)
   }
   async setLocation (chat: IChat, user: User): Promise<Order> {
-    const defaultLocation = await user.getDefaultLocation()
+    const defaultLocation: Location | null = await user.getDefaultLocation()
     if (defaultLocation === null) {
       const currentLocation = await Conversation.askLocation(chat)
       this.location = currentLocation.id
@@ -120,10 +121,16 @@ export class Order {
     return order
   }
   static async makeImmediateOrder (chat: IChat, user: User): Promise<Order> {
-    const selectedDishes = await Selection.selectDishesForOrder(chat)
-    const order = await Order.create(selectedDishes, user)
-    await order.setLocation(chat, user)
-    return order
+    try {
+      const selectedDishes = await Selection.selectDishesForOrder(chat)
+      const order = await Order.create(selectedDishes, user)
+      await order.setLocation(chat, user)
+      return order
+    } catch (error) {
+      console.error('[BOT] ERROR MAKING IMMEDIATE ORDER: ', error)
+      await chat.say(Messages.SOMETHING_WENT_WRONG)
+      throw Error(error)
+    }
   }
   static async toArray (orders: Array<IOrder>): Promise<Array<Order>> {
     const result = []
