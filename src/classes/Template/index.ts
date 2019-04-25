@@ -1,13 +1,16 @@
 import { Dish, Order, User } from '..'
 import { GenericTemplate } from './generic'
 import { ReceiptTemplate } from './receipt'
+import { ButtonType } from '../../types'
 import { Commands, Information, Messages } from '../../config'
 
 export class Template {
   static async getOrderReceiptMessage (order: Order, user: User): Promise<ReceiptTemplate> {
-    const dishesElements = (await order.getDishesArray()).map((dish: Dish) => dish.getElementData()) || []
+    const dishes = await order.getDishesArray()
+    if (!dishes || dishes.length < 1) throw Error(Messages.NO_DISHES_IN_ORDER)
+    const dishesElements = (await order.getDishesArray()).map((dish: Dish) => dish.getElementData())
     return {
-      template_type: 'receipt',
+      template_type: ButtonType.RECEIPT,
       recipient_name: user.getFullName(),
       merchant_name: Information.MERCHANT_NAME,
       order_number: `${order.id}`,
@@ -26,8 +29,8 @@ export class Template {
       subtitle: `Price: ${order.getTotalPrice().toFixed(2)}${Information.CURRENCY_SYMBOL}`,
       buttons: [
         {
-          title: 'Cancel',
-          type: 'postback',
+          title: Messages.CANCEL,
+          type: ButtonType.POSTBACK,
           payload: `ORDERS_CANCEL___${order.id}`
         }
       ]
@@ -40,14 +43,14 @@ export class Template {
       image_url: dish.photo,
       buttons: [
         {
-          type: 'web_url',
+          type: ButtonType.WEB_URL,
           url: dish.photo,
-          title: 'Photo'
+          title: Messages.PHOTO
         },
         {
-          type: 'web_url',
+          type: ButtonType.WEB_URL,
           url: dish.getInformationURL(),
-          title: 'More'
+          title: Messages.MORE
         }
       ]
     }
@@ -59,24 +62,24 @@ export class Template {
     let subtitle = ''
     if (user.email) subtitle += `Email: ${user.email}\n`
     if (user.phone) subtitle += `Phone: ${user.phone}\n`
-    if (!user.email && !user.phone) subtitle = 'Email and phone number not found!'
+    if (!user.email && !user.phone) subtitle = Messages.NO_CONTACT_INFORMATION
     return {
       title: user.getFullName(),
       subtitle: subtitle,
       buttons: [
         {
           title: Messages.UPDATE_CONTACT_INFORMATION,
-          type: 'postback',
+          type: ButtonType.POSTBACK,
           payload: Commands.UPDATE_CONTACT_INFORMATION
         },
         {
           title: Messages.SHOW_DEFAULT_LOCATION,
-          type: 'postback',
+          type: ButtonType.POSTBACK,
           payload: Commands.SHOW_DEFAULT_LOCATION
         },
         {
           title: Messages.UPDATE_DEFAULT_LOCATION,
-          type: 'postback',
+          type: ButtonType.POSTBACK,
           payload: Commands.UPDATE_DEFAULT_LOCATION
         }
       ]

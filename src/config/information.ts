@@ -1,4 +1,5 @@
 export enum Information {
+  BOT_NAME = 'EasyFood Bot',
   MERCHANT_NAME = 'EasyFood Delivery',
   CURRENCY = 'EUR',
   CURRENCY_SYMBOL = '€',

@@ -1,6 +1,7 @@
-import db from '../database'
+import db, { NotificationType } from '../database'
+import { Messages } from '../config'
 import { isEmail, isURL } from 'validator'
-import { IChat, ProfileObject } from '../types'
+import { IChat, ProfileObject, ButtonType } from '../types'
 import { Conversation, Location, Order, OrderStatus, Template } from '.'
 
 export interface IUser {
@@ -45,7 +46,7 @@ export class User {
     }
   }
   async setEmail (value: string): Promise<User> {
-    if (!isEmail(value)) throw Error('Email is not valid!')
+    if (!isEmail(value)) throw Error(Messages.INVALID_EMAIL)
     this.email = value
     await db.query(`UPDATE users SET email = $1, updated_at = now() at time zone 'utc' WHERE messenger_id = $2`, [this.email, this.messengerID])
     return this
@@ -113,10 +114,10 @@ export class User {
     return this
   }
   async showDefaultLocation (chat: IChat): Promise<any> {
-    if (!this.location) return chat.say('Default location for your account not found!')
+    if (!this.location) return chat.say(Messages.NO_DEFAULT_LOCATION)
     const location = await this.getDefaultLocation()
-    return chat.sendButtonTemplate('Account default location', [{
-      type: 'web_url',
+    return chat.sendButtonTemplate(Messages.DEFAULT_LOCATION, [{
+      type: ButtonType.WEB_URL,
       url: location.url,
       title: location.title
     }])
@@ -131,7 +132,7 @@ export class User {
   async showContactInformation (chat: IChat): Promise<any> {
     return this.email !== null && this.phone !== null
       ? chat.sendGenericTemplate([Template.getContactInformationGenericMessage(this)])
-      : chat.say('Contact information for your account not found!')
+      : chat.say(Messages.NO_CONTACT_INFORMATION)
   }
   async getCreatedOrders (): Promise<Array<Order>> {
     const { rows } = await db.query(`SELECT * FROM orders WHERE user_id = $1 AND status = ${OrderStatus.NEW}`, [this.id])
@@ -152,12 +153,12 @@ export class User {
   }
   async writeFeedBack (chat: IChat): Promise<boolean> {
     const conversation = await Conversation.createConversation(chat)
-    const message = await Conversation.askQuestion(conversation, 'Write any remark or offer to EasyFood Team')
+    const message = await Conversation.askQuestion(conversation, Messages.WRITE_FEEDBACK_MESSAGE)
     const yes = await Conversation.askYesNo(conversation, `You wrote feedback (${message.length} symbols). Send this feedback?`)
     if (yes) {
       console.log(`[BOT] USER (${this.firstName} ${this.lastName}) CREATED FEEDBACK (${message.length} symbols)!`)
-      await db.query(`NOTIFY feedback_message, '${JSON.stringify({ message })}'`)
-      await conversation.say('Your feedback was received, thank you for choosing us!')
+      await db.query(`NOTIFY ${NotificationType.FEEDBACK}, '${JSON.stringify({ message })}'`)
+      await conversation.say(Messages.FEEDBACK_RECEIVED)
     }
     await conversation.end()
     return yes

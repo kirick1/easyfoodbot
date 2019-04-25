@@ -1,77 +1,78 @@
-import { Information, Messages, Commands } from '.'
+import { ButtonType } from '../types'
+import { Commands, Information, Messages } from '.'
 
 export const GreetingText = [
   {
     locale: Information.LOCALE,
-    text: 'Hello, {{user.full_name}}! Welcome to EasyFood IBot!'
+    text: `Hello, {{user.full_name}}! Welcome to ${Information.BOT_NAME}!`
   }
 ]
 
 export const PersistentMenu = [
   {
     title: Messages.MAKE_ORDER,
-    type: 'postback',
+    type: ButtonType.POSTBACK,
     payload: Commands.MAKE_ORDER_NOW
   },
   {
     title: Messages.MY_ORDERS,
-    type: 'nested',
+    type: ButtonType.NESTED,
     call_to_actions: [
       {
-        title: Messages.CREATED_ORDERS,
-        type: 'postback',
+        title: Messages.CREATED,
+        type: ButtonType.POSTBACK,
         payload: Commands.CREATED_ORDERS
       },
       {
-        title: Messages.CURRENT_ORDERS,
-        type: 'postback',
+        title: Messages.CURRENT,
+        type: ButtonType.POSTBACK,
         payload: Commands.CURRENT_ORDERS
       },
       {
-        title: Messages.COMPLETED_ORDERS,
-        type: 'postback',
+        title: Messages.COMPLETED,
+        type: ButtonType.POSTBACK,
         payload: Commands.COMPLETED_ORDERS
       }
     ]
   },
   {
     title: Messages.MORE,
-    type: 'nested',
+    type: ButtonType.NESTED,
     call_to_actions: [
       {
         title: Messages.ACCOUNT,
-        type: 'nested',
+        type: ButtonType.NESTED,
         call_to_actions: [
           {
             title: Messages.SHOW_CONTACT_INFORMATION,
-            type: 'postback',
+            type: ButtonType.POSTBACK,
             payload: Commands.SHOW_CONTACT_INFORMATION
           },
           {
             title: Messages.UPDATE_CONTACT_INFORMATION,
-            type: 'postback',
+            type: ButtonType.POSTBACK,
             payload: Commands.UPDATE_CONTACT_INFORMATION
           },
           {
             title: Messages.SHOW_DEFAULT_LOCATION,
-            type: 'postback',
+            type: ButtonType.POSTBACK,
             payload: Commands.SHOW_DEFAULT_LOCATION
           },
           {
             title: Messages.UPDATE_DEFAULT_LOCATION,
-            type: 'postback',
+            type: ButtonType.POSTBACK,
             payload: Commands.UPDATE_DEFAULT_LOCATION
           }
         ]
       },
       {
         title: Information.MERCHANT_NAME,
-        type: 'web_url',
+        type: ButtonType.WEB_URL,
         url: Information.EASYFOOD_PAGE
       },
       {
         title: Messages.WRITE_FEEDBACK,
-        type: 'postback',
+        type: ButtonType.POSTBACK,
         payload: Commands.WRITE_FEEDBACK
       }
     ]

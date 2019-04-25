@@ -1,4 +1,4 @@
-import db from '../../database'
+import db, { NotificationType } from '../../database'
 import { IChat } from '../../types'
 import { Selection } from './Selection'
 import { Dish, User, Template, Location, Conversation } from '..'
@@ -101,7 +101,7 @@ export class Order {
     const { rows: [orderData] } = await db.query('INSERT INTO orders (user_id, total_price) VALUES ($1, $2) RETURNING *', [user.id, totalPrice])
     for (const dish of selectedDishes.values()) await db.query('INSERT INTO order_dishes (order_id, dish_id, number) VALUES ($1, $2, $3)', [parseInt(orderData.id, 10), dish.id, dish.numberInOrder || 1])
     const order = new Order(orderData)
-    if (notify) await db.query(`NOTIFY new_order, '${JSON.stringify(order.getInformation())}'`)
+    if (notify) await db.query(`NOTIFY ${NotificationType.ORDER}, '${JSON.stringify(order.getInformation())}'`)
     return order
   }
   static async makeImmediateOrder (chat: IChat, user: User): Promise<Order> {

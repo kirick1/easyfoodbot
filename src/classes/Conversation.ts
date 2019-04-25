@@ -1,5 +1,6 @@
 import { Location } from '../classes'
-import { MessagePayload, LocationPayload, IChat, IConversation, CONTENT_TYPE } from '../types'
+import { Messages } from '../config'
+import { CONTENT_TYPE, IChat, IConversation, LocationPayload, MessagePayload } from '../types'
 
 export const defaultTextValidator = (text: string, minLength: number = 0, maxLength: number = 8000): boolean => text.length >= minLength && text.length <= maxLength
 
@@ -7,11 +8,11 @@ export class Conversation {
   static createConversation (chat: IChat): Promise<IConversation> {
     return new Promise<IConversation>((resolve) => chat.conversation(resolve))
   }
-  static askYesNo (conversation: IConversation, text: string = 'Right?'): Promise<boolean> {
+  static askYesNo (conversation: IConversation, text: string = Messages.RIGHT): Promise<boolean> {
     return new Promise<boolean>((resolve) => conversation.ask({
       text,
-      quickReplies: ['Yes', 'No']
-    }, (payload: MessagePayload) => resolve(payload.message.text === 'Yes')))
+      quickReplies: [Messages.YES, Messages.NO]
+    }, (payload: MessagePayload) => resolve(payload.message.text === Messages.YES)))
   }
   static askQuestion (conversation: IConversation, question: any, askConfirmation: boolean = false, validator: Function = defaultTextValidator): Promise<string> {
     return new Promise<string>((resolve) => conversation.ask(question, async (payload: MessagePayload) => {
@@ -24,7 +25,7 @@ export class Conversation {
       } else return resolve(await Conversation.askQuestion(conversation, question, askConfirmation, validator))
     }))
   }
-  static askEmail (chat: IChat, text: string = 'Add email'): Promise<string> {
+  static askEmail (chat: IChat, text: string = Messages.ADD_EMAIL): Promise<string> {
     return new Promise<string>((resolve) => chat.conversation((conversation: IConversation) => conversation.ask({
       text, quickReplies: [{ content_type: CONTENT_TYPE.EMAIL }]
     }, async (payload: MessagePayload, conversation: IConversation) => {
@@ -33,7 +34,7 @@ export class Conversation {
       return resolve(value)
     })))
   }
-  static askPhoneNumber (chat: IChat, text: string = 'Add mobile phone'): Promise<string> {
+  static askPhoneNumber (chat: IChat, text: string = Messages.ADD_MOBILE_PHONE): Promise<string> {
     return new Promise<string>((resolve) => chat.conversation((conversation: IConversation) => conversation.ask({
       text, quickReplies: [{ content_type: CONTENT_TYPE.PHONE_NUMBER }]
     }, async (payload: MessagePayload, conversation: IConversation) => {
@@ -42,7 +43,7 @@ export class Conversation {
       return resolve(value)
     })))
   }
-  static askLocation (chat: IChat, text: string = 'Add location'): Promise<Location> {
+  static askLocation (chat: IChat, text: string = Messages.ADD_LOCATION): Promise<Location> {
     return new Promise<Location>((resolve) => chat.conversation((conversation: IConversation) => conversation.ask({
       text, quickReplies: [{ content_type: CONTENT_TYPE.LOCATION }]
     }, async (payload: LocationPayload, conversation: IConversation) => {

@@ -27,21 +27,21 @@ export const PostbackEventController = async (payload: PostbackPayload, chat: IC
               case Commands.CREATED_ORDERS: {
                 const orders = await user.getCreatedOrders()
                 if (orders.length < 1) return chat.say(Messages.NO_CREATED_ORDERS)
-                await chat.say('Created orders:')
+                await chat.say(Messages.CREATED_ORDERS)
                 for (const order of orders) await order.showReceipt(chat, user)
                 break
               }
               case Commands.CURRENT_ORDERS: {
                 const orders = await user.getCurrentOrders()
                 if (orders.length < 1) return chat.say(Messages.NO_CURRENT_ORDERS)
-                await chat.say('Current orders:')
+                await chat.say(Messages.CURRENT_ORDERS)
                 for (const order of orders) await order.showReceipt(chat, user)
                 break
               }
               case Commands.COMPLETED_ORDERS: {
                 const orders = await user.getCompletedOrders()
                 if (orders.length < 1) return chat.say(Messages.NO_COMPLETED_ORDERS)
-                await chat.say('Completed orders:')
+                await chat.say(Messages.COMPLETED_ORDERS)
                 for (const order of orders) await order.showReceipt(chat, user)
                 break
               }
@@ -54,7 +54,7 @@ export const PostbackEventController = async (payload: PostbackPayload, chat: IC
                     await User.cancelOrder(order)
                     await chat.say(`Order #${order.id} was canceled!`)
                     const created = await user.getCreatedOrders()
-                    if (created.length > 0) await chat.say('Created orders:')
+                    if (created.length > 0) await chat.say(Messages.CREATED_ORDERS)
                     else await chat.say(Messages.NO_CREATED_ORDERS)
                     for (const o of created) await o.showReceipt(chat, user)
                     break
@@ -76,7 +76,7 @@ export const PostbackEventController = async (payload: PostbackPayload, chat: IC
               }
               case Commands.UPDATE_CONTACT_INFORMATION: {
                 await user.setContactInformation(chat)
-                await chat.say('Account contact information was updated!')
+                await chat.say(Messages.CONTACT_INFORMATION_UPDATED)
                 await user.showContactInformation(chat)
                 break
               }
@@ -85,7 +85,7 @@ export const PostbackEventController = async (payload: PostbackPayload, chat: IC
               }
               case Commands.UPDATE_DEFAULT_LOCATION: {
                 await user.setDefaultLocation(chat)
-                await chat.say('Account default location was successfully saved!')
+                await chat.say(Messages.DEFAULT_LOCATION_UPDATED)
                 return await user.showDefaultLocation(chat)
               }
               default: {

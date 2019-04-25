@@ -1,4 +1,5 @@
 import db from '../database'
+import { Messages } from '../config'
 import { Attachment } from '../types'
 
 export interface ILocation {
@@ -45,9 +46,9 @@ export class Location implements ILocation {
     return location
   }
   static async getByID (locationID?: number | null): Promise<Location> {
-    if (!locationID) throw Error('Location ID is required!')
+    if (!locationID) throw Error(Messages.LOCATION_ID_IS_REQUIRED)
     const { rows: [locationData] } = await db.query('SELECT * FROM locations WHERE id = $1', [locationID])
-    if (!locationData) throw Error('Location not found!')
+    if (!locationData) throw Error(Messages.LOCATION_NOT_FOUND)
     return new Location(locationData)
   }
 }

@@ -1,5 +1,10 @@
 import { Client, ConnectionConfig } from 'pg'
 
+export enum NotificationType {
+  FEEDBACK = 'feedback_message',
+  ORDER = 'new_order'
+}
+
 const ConnectionConfig: ConnectionConfig = {
   user: process.env.PG_USER,
   host: process.env.PG_HOST || '127.0.0.1',

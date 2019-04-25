@@ -1,5 +1,12 @@
 import { MessagePayload, PostbackPayload } from './payload'
 
+export enum ButtonType {
+  POSTBACK = 'postback',
+  NESTED = 'nested',
+  WEB_URL = 'web_url',
+  RECEIPT = 'receipt'
+}
+
 export interface BotOptions {
   accessToken: string
   verifyToken: string

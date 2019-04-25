@@ -8,7 +8,7 @@ enum SELECTION_KEYS {
   SETS = '(Sets)',
   SUBMIT = '(Submit)',
   CANCEL = '(Cancel)',
-  SELECTED_DISHES = 'SelectedDishes'
+  SELECTED_DISHES = 'SELECTED_DISHES'
 }
 
 export class Selection {
@@ -19,12 +19,12 @@ export class Selection {
       throw Error(Messages.NO_DISHES_SETS_YET)
     }
     const selectedDishesSetTitle = await Conversation.askQuestion(conversation, {
-      text: 'Available dishes sets:',
+      text: Messages.AVAILABLE_DISHES_SETS,
       quickReplies: Array.from(dishesSets.keys())
     })
     const selectedDishesSet = dishesSets.get(selectedDishesSetTitle)
     if (!selectedDishesSet || !selectedDishesSet.dishes || selectedDishesSet.dishes.size === 0) {
-      await conversation.say('There are no dishes in selected set!')
+      await conversation.say(Messages.NO_DISHES_IN_SELECTED_SET)
       return Selection.selectDishesSet(conversation, dishesSets)
     } else {
       await Dish.showDishesMapInformation(conversation, selectedDishesSet.dishes)
@@ -38,7 +38,7 @@ export class Selection {
     }
     const selectedDishes: Map<string, Dish> = conversation.get(SELECTION_KEYS.SELECTED_DISHES)
     if (selectedDishes === undefined || selectedDishes === null || !(selectedDishes instanceof Map)) {
-      await conversation.say('Selected dishes not found, please try again!')
+      await conversation.say(Messages.NO_SELECTED_DISHES)
       return Selection.selectDishesFromDishesSet(conversation, dishesSets, dishesMap, text)
     }
     if (text === null && selectedDishes.size > 0) text = Dish.getSelectedDishesPriceListString(selectedDishes)
@@ -58,15 +58,15 @@ export class Selection {
           await conversation.end()
           return selectedDishes
         } else {
-          await conversation.say('Dishes not selected yet!')
+          await conversation.say(Messages.NO_SELECTED_DISHES)
           return Selection.selectDishesFromDishesSet(conversation, dishesSets)
         }
       }
       case SELECTION_KEYS.CANCEL: {
-        if (await Conversation.askYesNo(conversation, `Are you really want to cancel this order?`)) {
-          await conversation.say('Order was canceled!')
+        if (await Conversation.askYesNo(conversation, Messages.CANCEL_ORDER_QUESTION)) {
+          await conversation.say(Messages.ORDER_WAS_CANCELED)
           await conversation.end()
-          throw Error('Order was canceled!')
+          throw Error(Messages.ORDER_WAS_CANCELED)
         } else return Selection.selectDishesFromDishesSet(conversation, dishesSets)
       }
       default: {
@@ -87,11 +87,11 @@ export class Selection {
   }
   static async selectDishesForOrder (chat: IChat): Promise<Map<string, Dish>> {
     const dishesSets: Map<string, DishesSet> = await DishesSet.getAllDishesSets()
-    if (dishesSets.size === 0) throw Error('There are no dishes sets yet!')
+    if (dishesSets.size === 0) throw Error(Messages.NO_DISHES_SETS_YET)
     const conversation = await Conversation.createConversation(chat)
     conversation.set(SELECTION_KEYS.SELECTED_DISHES, new Map<string, Dish>())
     try {
-      const selectedDishes = await Selection.selectDishesFromDishesSet(conversation, dishesSets, new Map<string, Dish>(), 'Select the desired number of products')
+      const selectedDishes = await Selection.selectDishesFromDishesSet(conversation, dishesSets, new Map<string, Dish>(), Messages.SELECT_DISHES_FOR_ORDER)
       if (selectedDishes && selectedDishes.size > 0) {
         await conversation.end()
         return selectedDishes
@@ -99,7 +99,7 @@ export class Selection {
     } catch (error) {
       console.error('[BOT] [SELECTION] SELECTING DISHES FOR ORDER ERROR: ', error)
       if (typeof error === 'string') await conversation.say(error)
-      else await conversation.say('Something went wrong, please try again later!')
+      else await conversation.say(Messages.SOMETHING_WENT_WRONG)
       await conversation.end()
       return new Map<string, Dish>()
     }
