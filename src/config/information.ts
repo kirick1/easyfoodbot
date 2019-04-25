@@ -6,5 +6,7 @@ export enum Information {
   PAYMENT_METHOD = 'Cash',
   DEFAULT_INFORMATION_URL = 'https://www.google.com',
   EASYFOOD_PAGE = 'https://www.facebook.com/EF.delivery/',
-  LOCALE = 'default'
+  LOCALE = 'default',
+  WEBHOOK_PATH = '/webhook',
+  GRAPH_API_VERSION = 'v3.2'
 }

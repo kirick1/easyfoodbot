@@ -1,8 +1,8 @@
 import { Client, ConnectionConfig } from 'pg'
 
 export enum NotificationType {
-  FEEDBACK = 'feedback_message',
-  ORDER = 'new_order'
+  ORDER = 'new_order',
+  FEEDBACK = 'feedback_message'
 }
 
 const ConnectionConfig: ConnectionConfig = {
