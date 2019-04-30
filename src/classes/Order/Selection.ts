@@ -5,9 +5,9 @@ import { Conversation } from '..'
 import { Messages } from '../../config'
 
 enum SELECTION_KEYS {
-  SETS = '(Sets)',
-  SUBMIT = '(Submit)',
-  CANCEL = '(Cancel)',
+  SETS = '[Back to sets]',
+  SUBMIT = '[Submit order]',
+  CANCEL = '[Cancel order]',
   SELECTED_DISHES = 'SELECTED_DISHES'
 }
 
