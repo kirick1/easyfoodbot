@@ -3,7 +3,7 @@ export enum Information {
   MERCHANT_NAME = 'EasyFood Delivery',
   CURRENCY = 'EUR',
   CURRENCY_SYMBOL = '€',
-  PAYMENT_METHOD = 'Cash',
+  PAYMENT_METHOD = 'Internet banking',
   DEFAULT_INFORMATION_URL = 'https://www.google.com',
   EASYFOOD_PAGE = 'https://www.facebook.com/EF.delivery/',
   LOCALE = 'default',
