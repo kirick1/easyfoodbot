@@ -19,7 +19,7 @@ export enum Messages {
   ADD_EMAIL = 'Add email',
   INVALID_EMAIL = 'Email is not valid!',
   ADD_MOBILE_PHONE = 'Add mobile phone',
-  ADD_LOCATION = 'Add location',
+  ADD_LOCATION = 'Choose delivery location',
   SHOW_CONTACT_INFORMATION = 'Show contact information',
   NO_CONTACT_INFORMATION = 'Contact information for your account not found!',
   UPDATE_CONTACT_INFORMATION = 'Update contact information',
