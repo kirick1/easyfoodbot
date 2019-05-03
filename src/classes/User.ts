@@ -172,4 +172,9 @@ export class User {
     await conversation.end()
     return yes
   }
+  static async showGetStartedMessage (chat: IChat): Promise<void> {
+    const user = new User()
+    await user.syncInformation(chat)
+    return chat.sendGenericTemplate([Template.getGetStartedButtonGenericMessage(user)])
+  }
 }
